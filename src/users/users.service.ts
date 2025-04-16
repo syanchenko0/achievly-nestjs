@@ -1,4 +1,46 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from '@/users/entities/user.entity';
+import { Repository } from 'typeorm';
+import { EntityRelations } from '@/users/types/user.type';
+import { WRONG_BODY } from '@/app/constants/error.constant';
+import { userEntitySchema } from '@/users/schemas/user.schema';
 
 @Injectable()
-export class UsersService {}
+export class UsersService {
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+  ) {}
+
+  async getEntityRelations<K extends EntityRelations>({
+    user_id,
+    entity,
+  }: {
+    user_id: number;
+    entity: K;
+  }): Promise<UserEntity[K]> {
+    const result = await this.userRepository.findOne({
+      where: { id: user_id },
+      relations: [entity],
+    });
+
+    return result?.[entity] || [];
+  }
+
+  async create(user: Partial<UserEntity>): Promise<UserEntity> {
+    const candidate = await this.userRepository.findOneBy({
+      email: user.email,
+    });
+
+    if (candidate) {
+      return candidate;
+    }
+
+    const validateResult = userEntitySchema.safeParse(user);
+
+    if (validateResult.error) throw new BadRequestException(WRONG_BODY);
+
+    return await this.userRepository.save(user);
+  }
+}
