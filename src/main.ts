@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { setupSwagger } from '@/app/helpers/swagger.helper';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,8 @@ async function bootstrap() {
     credentials: true,
     exposedHeaders: 'set-cookie',
   });
+
+  setupSwagger(app);
 
   const port = process.env.PORT ?? 3000;
 
