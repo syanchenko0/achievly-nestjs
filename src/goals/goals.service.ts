@@ -1,5 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateGoalBody, CreateGoalDto, GoalDto } from '@/goals/dto/goal.dto';
+import {
+  CreateGoalBody,
+  CreateGoalDto,
+  GoalDto,
+  UpdateGoalBody,
+} from '@/goals/dto/goal.dto';
 import { UsersService } from '@/users/users.service';
 import { RequestUser } from '@/app/types/common.type';
 import {
@@ -91,5 +96,20 @@ export class GoalsService {
     });
 
     if (!goal) throw new BadRequestException(WRONG_PARAMS);
+
+    if (data?.tasks?.length) {
+      await this.taskRepository.upsert(data.tasks, ['id']);
+    }
+
+    await this.goalRepository.update(goal.id, {
+      title: (data as UpdateGoalBody)?.title || goal?.title,
+      category: (data as UpdateGoalBody)?.category || goal?.category,
+      status: (data as UpdateGoalBody)?.status || goal?.status,
+      deadlineDate:
+        (data as UpdateGoalBody)?.deadlineDate || goal?.deadlineDate,
+      note: (data as UpdateGoalBody)?.note || goal?.note,
+      achievedDate:
+        (data as UpdateGoalBody)?.achievedDate || goal?.achievedDate,
+    });
   }
 }

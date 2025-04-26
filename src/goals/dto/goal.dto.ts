@@ -149,7 +149,7 @@ class UpdateGoalDto {
     required: false,
     example: 'Goal title',
   })
-  title: string;
+  title?: string;
 
   @ApiProperty({
     description: 'Категория цели',
@@ -157,7 +157,7 @@ class UpdateGoalDto {
     required: false,
     example: 'education',
   })
-  category: GoalCategoryEnum;
+  category?: GoalCategoryEnum;
 
   @ApiProperty({
     description: 'Статус цели',
@@ -165,7 +165,7 @@ class UpdateGoalDto {
     required: false,
     example: 'ongoing',
   })
-  status: GoalStatusEnum;
+  status?: GoalStatusEnum;
 
   @ApiProperty({
     description: 'Дата окончания цели',
@@ -201,13 +201,12 @@ class UpdateGoalDto {
   tasks?: TaskDto[];
 
   constructor(goal: UpdateGoalBody) {
-    this.title = goal.title;
-    this.category = goal.category;
-    this.status = GoalStatusEnum.Ongoing;
-    this.deadlineDate = goal.deadlineDate;
-    this.note = goal.note;
-    this.achievedDate = goal.achievedDate;
-    this.tasks = goal.tasks;
+    this.title = goal?.title;
+    this.category = goal?.category;
+    this.status = goal?.status;
+    this.deadlineDate = goal?.deadlineDate;
+    this.note = goal?.note;
+    this.achievedDate = goal?.achievedDate;
   }
 }
 
@@ -216,9 +215,17 @@ type CreateGoalBody = Pick<
   'title' | 'category' | 'deadlineDate' | 'note' | 'user' | 'tasks'
 >;
 
-type UpdateGoalBody = Pick<
-  GoalEntity,
-  'title' | 'category' | 'deadlineDate' | 'note' | 'achievedDate' | 'tasks'
+type UpdateGoalBody = Partial<
+  Pick<
+    GoalEntity,
+    | 'title'
+    | 'category'
+    | 'status'
+    | 'deadlineDate'
+    | 'note'
+    | 'achievedDate'
+    | 'tasks'
+  >
 >;
 
 export { GoalDto, CreateGoalDto, UpdateGoalDto };

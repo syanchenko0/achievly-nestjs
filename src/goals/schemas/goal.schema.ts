@@ -64,6 +64,7 @@ const UpdateGoalDtoSchema = z.object({
       'socialActivity',
     ])
     .optional(),
+  status: z.enum(['ongoing', 'achieved']).optional(),
   deadlineDate: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
   achievedDate: z.string(ZOD_ERROR).optional(),
