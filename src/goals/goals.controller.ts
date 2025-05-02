@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { GoalsService } from '@/goals/goals.service';
 import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
 import {
@@ -60,5 +68,16 @@ export class GoalsController {
     const { params, body } = request;
 
     return await this.goalsService.updateGoal(params, body);
+  }
+
+  @Delete('/:id')
+  @ApiOperation({ operationId: 'deleteGoal', summary: 'Delete goal' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'id', type: String })
+  async deleteGoal(@Req() request: ExtendedRequest) {
+    const { params } = request;
+
+    return await this.goalsService.deleteGoal(params);
   }
 }

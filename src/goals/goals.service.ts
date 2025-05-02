@@ -112,4 +112,10 @@ export class GoalsService {
         (data as UpdateGoalBody)?.achievedDate || goal?.achievedDate,
     });
   }
+
+  async deleteGoal(params: Record<string, unknown>) {
+    if (!params?.id) throw new BadRequestException(WRONG_PARAMS);
+
+    await this.goalRepository.delete({ id: Number(params.id) });
+  }
 }
