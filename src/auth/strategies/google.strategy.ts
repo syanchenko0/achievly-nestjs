@@ -12,7 +12,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: configService.get('GOOGLE_CLIENT_SECRET') as string,
       callbackURL: configService.get('GOOGLE_CALLBACK_URL') as string,
       scope: ['email', 'profile'],
-      passReqToCallback: true,
     });
   }
 
@@ -26,6 +25,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     },
     done: VerifyCallback,
   ) {
+    console.log({ profile });
+
     const { name, emails, photos } = profile;
 
     const user: ISocialProfile = {

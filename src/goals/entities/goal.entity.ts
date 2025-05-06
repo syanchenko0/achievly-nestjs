@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  Entity,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -13,6 +14,7 @@ import {
 } from '@/goals/constants/goal.constant';
 import { TaskEntity } from '@/goals/entities/task.entity';
 
+@Entity()
 class GoalEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -31,14 +33,14 @@ class GoalEntity {
   })
   status: GoalStatusEnum;
 
-  @Column({ nullable: true, type: 'string' })
-  deadlineDate?: string;
+  @Column({ nullable: true, type: 'timestamptz' })
+  deadlineDate?: Date;
 
-  @Column({ nullable: true, type: 'string' })
+  @Column({ nullable: true })
   note?: string;
 
-  @Column({ nullable: true, type: 'string' })
-  achievedDate?: string;
+  @Column({ nullable: true, type: 'timestamptz' })
+  achievedDate?: Date;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

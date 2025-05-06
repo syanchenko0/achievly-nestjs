@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Callback, Strategy } from 'passport-yandex';
-
-import { AuthService } from '@/auth/auth.service';
 import { ISocialProfile } from '@/auth/types/auth.type';
 
 @Injectable()
