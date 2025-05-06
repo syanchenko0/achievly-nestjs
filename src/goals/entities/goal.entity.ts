@@ -33,14 +33,14 @@ class GoalEntity {
   })
   status: GoalStatusEnum;
 
-  @Column({ nullable: true, type: 'timestamptz' })
-  deadlineDate?: Date;
+  @Column({ nullable: true })
+  deadlineDate?: string;
 
   @Column({ nullable: true })
   note?: string;
 
-  @Column({ nullable: true, type: 'timestamptz' })
-  achievedDate?: Date;
+  @Column({ nullable: true })
+  achievedDate?: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

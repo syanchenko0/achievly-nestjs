@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TaskEntity } from '@/goals/entities/task.entity';
+import { GoalEntity } from '@/goals/entities/goal.entity';
 
 class TaskDto {
   @ApiProperty({
@@ -68,16 +69,19 @@ class CreateTaskDto {
   })
   note?: string;
 
-  constructor(
-    task: Omit<
-      TaskEntity,
-      'id' | 'doneDate' | 'createdAt' | 'updatedAt' | 'goal'
-    >,
-  ) {
+  goal: GoalEntity;
+
+  constructor(task: CreateTask) {
     this.title = task.title;
     this.deadlineDate = task.deadlineDate;
     this.note = task.note;
+    this.goal = task.goal;
   }
 }
+
+type CreateTask = Omit<
+  TaskEntity,
+  'id' | 'doneDate' | 'createdAt' | 'updatedAt'
+>;
 
 export { TaskDto, CreateTaskDto };

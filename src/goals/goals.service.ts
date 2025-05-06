@@ -38,15 +38,6 @@ export class GoalsService {
 
     if (error) throw new BadRequestException(WRONG_BODY);
 
-    const tasks: TaskEntity[] = [];
-
-    if (data?.tasks) {
-      for (const task of data.tasks) {
-        const result = await this.taskRepository.save(new CreateTaskDto(task));
-        tasks.push(result);
-      }
-    }
-
     const user = await this.usersService.getUserById(userId);
 
     if (!user) throw new BadRequestException(WRONG_TOKEN);
@@ -55,9 +46,14 @@ export class GoalsService {
       new CreateGoalDto({
         ...(data as CreateGoalBody),
         user,
-        tasks,
       }),
     );
+
+    if (data?.tasks) {
+      for (const task of data.tasks) {
+        await this.taskRepository.save(new CreateTaskDto({ ...task, goal }));
+      }
+    }
 
     return new GoalDto(goal);
   }
@@ -67,9 +63,9 @@ export class GoalsService {
 
     if (error) throw new BadRequestException(WRONG_PARAMS);
 
-    const goals = await this.usersService.getEntityRelations({
-      user_id: user.id,
-      entity: 'goals',
+    const goals = await this.goalRepository.find({
+      where: { user: { id: user.id } },
+      relations: ['tasks'],
     });
 
     if (data?.status) {
@@ -98,7 +94,16 @@ export class GoalsService {
     if (!goal) throw new BadRequestException(WRONG_PARAMS);
 
     if (data?.tasks?.length) {
-      await this.taskRepository.upsert(data.tasks, ['id']);
+      const tasksTransformed = data.tasks.map((task) => ({
+        id: task?.id || -1,
+        title: task.title,
+        deadlineDate: task?.deadlineDate,
+        note: task?.note,
+        doneDate: task?.doneDate,
+        goal,
+      }));
+
+      await this.taskRepository.upsert(tasksTransformed, ['id']);
     }
 
     await this.goalRepository.update(goal.id, {

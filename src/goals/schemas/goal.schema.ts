@@ -13,7 +13,8 @@ const CreateTaskDtoSchema = z.object({
 });
 
 const UpdateTaskDtoSchema = z.object({
-  title: z.string(ZOD_ERROR).optional(),
+  id: z.number(ZOD_ERROR).optional(),
+  title: z.string(ZOD_ERROR),
   deadlineDate: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
   doneDate: z.string(ZOD_ERROR).optional(),

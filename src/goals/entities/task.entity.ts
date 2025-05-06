@@ -16,14 +16,14 @@ class TaskEntity {
   @Column({ nullable: false })
   title: string;
 
-  @Column({ nullable: true, type: 'timestamptz' })
-  deadlineDate?: Date;
+  @Column({ nullable: true })
+  deadlineDate?: string;
 
   @Column({ nullable: true })
   note?: string;
 
-  @Column({ nullable: true, type: 'timestamptz' })
-  doneDate?: Date;
+  @Column({ nullable: true })
+  doneDate?: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

@@ -25,8 +25,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     },
     done: VerifyCallback,
   ) {
-    console.log({ profile });
-
     const { name, emails, photos } = profile;
 
     const user: ISocialProfile = {
