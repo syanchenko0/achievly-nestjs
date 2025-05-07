@@ -1,16 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  CreateGoalBody,
-  CreateGoalDto,
-  GoalDto,
-  UpdateGoalBody,
-} from '@/goals/dto/goal.dto';
+import { GoalDto } from '@/goals/dto/goal.dto';
 import { UsersService } from '@/users/users.service';
 import { RequestUser } from '@/app/types/common.type';
 import {
-  CreateGoalDtoSchema,
+  CreateGoalSchema,
   GetGoalsSchema,
-  UpdateGoalDtoSchema,
+  UpdateGoalSchema,
 } from '@/goals/schemas/goal.schema';
 import {
   WRONG_BODY,
@@ -21,7 +16,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GoalEntity } from '@/goals/entities/goal.entity';
 import { TaskEntity } from '@/goals/entities/task.entity';
-import { CreateTaskDto } from '@/goals/dto/task.dto';
+import { CreateGoalBody, UpdateGoalBody } from '@/goals/dto/swagger.dto';
+import {
+  GoalCategoryEnum,
+  GoalStatusEnum,
+} from '@/goals/constants/goal.constant';
 
 @Injectable()
 export class GoalsService {
@@ -33,25 +32,32 @@ export class GoalsService {
     private readonly taskRepository: Repository<TaskEntity>,
   ) {}
 
-  async createGoal({ id: userId }: RequestUser, body: Record<string, unknown>) {
-    const { data, error } = CreateGoalDtoSchema.safeParse(body);
+  async createGoal({ id: userId }: RequestUser, body: CreateGoalBody) {
+    const { data, error } = CreateGoalSchema.safeParse(body);
 
-    if (error) throw new BadRequestException(WRONG_BODY);
+    if (error || !data) throw new BadRequestException(WRONG_BODY);
 
     const user = await this.usersService.getUserById(userId);
 
     if (!user) throw new BadRequestException(WRONG_TOKEN);
 
-    const goal = await this.goalRepository.save(
-      new CreateGoalDto({
-        ...(data as CreateGoalBody),
-        user,
-      }),
-    );
+    const goal = await this.goalRepository.save({
+      title: data.title,
+      category: data.category as GoalCategoryEnum,
+      status: GoalStatusEnum.Ongoing,
+      deadlineDate: data?.deadlineDate,
+      note: data?.note,
+      user,
+    });
 
     if (data?.tasks) {
       for (const task of data.tasks) {
-        await this.taskRepository.save(new CreateTaskDto({ ...task, goal }));
+        await this.taskRepository.save({
+          title: task.title,
+          deadlineDate: task?.deadlineDate,
+          note: task?.note,
+          goal,
+        });
       }
     }
 
@@ -77,18 +83,13 @@ export class GoalsService {
     return (goals || []).map((goal) => new GoalDto(goal));
   }
 
-  async updateGoal(
-    params: Record<string, unknown>,
-    body: Record<string, unknown>,
-  ) {
-    const { data, error } = UpdateGoalDtoSchema.safeParse(body);
+  async updateGoal(id: number, body: UpdateGoalBody) {
+    const { data, error } = UpdateGoalSchema.safeParse(body);
 
     if (error) throw new BadRequestException(WRONG_BODY);
 
-    if (!params?.id) throw new BadRequestException(WRONG_PARAMS);
-
     const goal = await this.goalRepository.findOneBy({
-      id: Number(params.id),
+      id: Number(id),
     });
 
     if (!goal) throw new BadRequestException(WRONG_PARAMS);
@@ -106,21 +107,17 @@ export class GoalsService {
       await this.taskRepository.upsert(tasksTransformed, ['id']);
     }
 
-    await this.goalRepository.update(goal.id, {
-      title: (data as UpdateGoalBody)?.title || goal?.title,
-      category: (data as UpdateGoalBody)?.category || goal?.category,
-      status: (data as UpdateGoalBody)?.status || goal?.status,
-      deadlineDate:
-        (data as UpdateGoalBody)?.deadlineDate || goal?.deadlineDate,
-      note: (data as UpdateGoalBody)?.note || goal?.note,
-      achievedDate:
-        (data as UpdateGoalBody)?.achievedDate || goal?.achievedDate,
+    return await this.goalRepository.update(goal.id, {
+      title: data?.title || goal?.title,
+      category: (data?.category as GoalCategoryEnum) || goal.category,
+      status: (data?.status as GoalStatusEnum) || goal.status,
+      deadlineDate: data?.deadlineDate || goal?.deadlineDate,
+      note: data?.note || goal?.note,
+      achievedDate: data?.achievedDate || goal?.achievedDate,
     });
   }
 
-  async deleteGoal(params: Record<string, unknown>) {
-    if (!params?.id) throw new BadRequestException(WRONG_PARAMS);
-
-    await this.goalRepository.delete({ id: Number(params.id) });
+  async deleteGoal(id: number) {
+    return await this.goalRepository.delete({ id });
   }
 }

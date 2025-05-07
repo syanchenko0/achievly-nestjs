@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TaskEntity } from '@/goals/entities/task.entity';
-import { GoalEntity } from '@/goals/entities/goal.entity';
 
 class TaskDto {
   @ApiProperty({
@@ -41,47 +40,10 @@ class TaskDto {
   constructor(task: TaskEntity) {
     this.id = task.id;
     this.title = task.title;
-    this.deadlineDate = task.deadlineDate;
-    this.note = task.note;
-    this.doneDate = task.doneDate;
+    this.deadlineDate = task?.deadlineDate;
+    this.note = task?.note;
+    this.doneDate = task?.doneDate;
   }
 }
 
-class CreateTaskDto {
-  @ApiProperty({
-    description: 'Заголовок задачи',
-    type: String,
-    example: 'Title',
-  })
-  title: string;
-
-  @ApiProperty({
-    description: 'Дата окончания задачи',
-    type: String,
-    example: '2025-02-02T21:00:00.000Z',
-  })
-  deadlineDate?: string;
-
-  @ApiProperty({
-    description: 'Примечание задачи',
-    type: String,
-    example: 'Note',
-  })
-  note?: string;
-
-  goal: GoalEntity;
-
-  constructor(task: CreateTask) {
-    this.title = task.title;
-    this.deadlineDate = task.deadlineDate;
-    this.note = task.note;
-    this.goal = task.goal;
-  }
-}
-
-type CreateTask = Omit<
-  TaskEntity,
-  'id' | 'doneDate' | 'createdAt' | 'updatedAt'
->;
-
-export { TaskDto, CreateTaskDto };
+export { TaskDto };

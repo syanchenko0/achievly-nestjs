@@ -1,20 +1,11 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   GoalCategoryEnum,
   GoalStatusEnum,
 } from '@/goals/constants/goal.constant';
-import { ApiProperty } from '@nestjs/swagger';
-import { GoalEntity } from '@/goals/entities/goal.entity';
 import { TaskDto } from '@/goals/dto/task.dto';
 
-class GoalDto {
-  @ApiProperty({
-    description: 'ID цели',
-    type: Number,
-    required: true,
-    example: 1,
-  })
-  id: number;
-
+class CreateGoalBody {
   @ApiProperty({
     description: 'Заголовок цели',
     type: String,
@@ -32,12 +23,55 @@ class GoalDto {
   category: GoalCategoryEnum;
 
   @ApiProperty({
+    description: 'Дата окончания цели',
+    type: String,
+    required: false,
+    example: '2025-02-02T21:00:00.000Z',
+  })
+  deadlineDate?: string;
+
+  @ApiProperty({
+    description: 'Примечание к цели',
+    type: String,
+    required: false,
+    example: 'Note',
+  })
+  note?: string;
+
+  @ApiProperty({
+    description: 'Задачи цели',
+    type: TaskDto,
+    isArray: true,
+    required: false,
+    nullable: true,
+  })
+  tasks?: TaskDto[];
+}
+
+class UpdateGoalBody {
+  @ApiProperty({
+    description: 'Заголовок цели',
+    type: String,
+    required: false,
+    example: 'Goal title',
+  })
+  title?: string;
+
+  @ApiProperty({
+    description: 'Категория цели',
+    type: String,
+    required: false,
+    example: 'education',
+  })
+  category?: GoalCategoryEnum;
+
+  @ApiProperty({
     description: 'Статус цели',
     type: String,
-    required: true,
+    required: false,
     example: 'ongoing',
   })
-  status: GoalStatusEnum;
+  status?: GoalStatusEnum;
 
   @ApiProperty({
     description: 'Дата окончания цели',
@@ -71,17 +105,6 @@ class GoalDto {
     nullable: true,
   })
   tasks?: TaskDto[];
-
-  constructor(goal: GoalEntity) {
-    this.id = goal.id;
-    this.title = goal.title;
-    this.category = goal.category;
-    this.status = goal.status;
-    this.deadlineDate = goal.deadlineDate;
-    this.note = goal.note;
-    this.achievedDate = goal.achievedDate;
-    this.tasks = (goal.tasks || []).map((task) => new TaskDto(task));
-  }
 }
 
-export { GoalDto };
+export { UpdateGoalBody, CreateGoalBody };

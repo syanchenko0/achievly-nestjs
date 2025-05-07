@@ -6,13 +6,13 @@ const GetGoalsSchema = z.object({
   status: z.enum([GoalStatusEnum.Ongoing, GoalStatusEnum.Achieved]).optional(),
 });
 
-const CreateTaskDtoSchema = z.object({
+const CreateTaskSchema = z.object({
   title: z.string(ZOD_ERROR),
   deadlineDate: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
 });
 
-const UpdateTaskDtoSchema = z.object({
+const UpdateTaskSchema = z.object({
   id: z.number(ZOD_ERROR).optional(),
   title: z.string(ZOD_ERROR),
   deadlineDate: z.string(ZOD_ERROR).optional(),
@@ -20,7 +20,7 @@ const UpdateTaskDtoSchema = z.object({
   doneDate: z.string(ZOD_ERROR).optional(),
 });
 
-const CreateGoalDtoSchema = z.object({
+const CreateGoalSchema = z.object({
   title: z.string(ZOD_ERROR),
   category: z.enum([
     'education',
@@ -41,10 +41,10 @@ const CreateGoalDtoSchema = z.object({
   ]),
   deadlineDate: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
-  tasks: z.array(CreateTaskDtoSchema).optional(),
+  tasks: z.array(CreateTaskSchema).optional(),
 });
 
-const UpdateGoalDtoSchema = z.object({
+const UpdateGoalSchema = z.object({
   title: z.string(ZOD_ERROR).optional(),
   category: z
     .enum([
@@ -69,7 +69,7 @@ const UpdateGoalDtoSchema = z.object({
   deadlineDate: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
   achievedDate: z.string(ZOD_ERROR).optional(),
-  tasks: z.array(UpdateTaskDtoSchema).optional(),
+  tasks: z.array(UpdateTaskSchema).optional(),
 });
 
-export { GetGoalsSchema, CreateGoalDtoSchema, UpdateGoalDtoSchema };
+export { GetGoalsSchema, CreateGoalSchema, UpdateGoalSchema };

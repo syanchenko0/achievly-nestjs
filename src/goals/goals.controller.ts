@@ -18,13 +18,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
-import {
-  CreateGoalBody,
-  CreateGoalDto,
-  GoalDto,
-  UpdateGoalBody,
-  UpdateGoalDto,
-} from '@/goals/dto/goal.dto';
+import { GoalDto } from '@/goals/dto/goal.dto';
+import { CreateGoalBody, UpdateGoalBody } from '@/goals/dto/swagger.dto';
+import { UpdateResult } from 'typeorm';
 
 @ApiTags('Goals')
 @UseGuards(JwtAuthGuard)
@@ -36,7 +32,7 @@ export class GoalsController {
   @ApiOperation({ operationId: 'createGoal', summary: 'Create goal' })
   @ApiResponse({ status: 200, type: GoalDto })
   @ApiResponse({ status: 400, type: BadRequest })
-  @ApiBody({ type: CreateGoalDto })
+  @ApiBody({ type: CreateGoalBody })
   async createGoal(
     @Req() request: Omit<ExtendedRequest, 'body'> & { body: CreateGoalBody },
   ) {
@@ -58,16 +54,16 @@ export class GoalsController {
 
   @Patch('/:id')
   @ApiOperation({ operationId: 'updateGoal', summary: 'Update goal' })
-  @ApiResponse({ status: 200, type: GoalDto })
+  @ApiResponse({ status: 200, type: UpdateResult })
   @ApiResponse({ status: 400, type: BadRequest })
-  @ApiBody({ type: UpdateGoalDto })
+  @ApiBody({ type: UpdateGoalBody })
   @ApiParam({ name: 'id', type: String })
   async updateGoal(
     @Req() request: Omit<ExtendedRequest, 'body'> & { body: UpdateGoalBody },
   ) {
     const { params, body } = request;
 
-    return await this.goalsService.updateGoal(params, body);
+    return await this.goalsService.updateGoal(Number(params.id), body);
   }
 
   @Delete('/:id')
@@ -78,6 +74,6 @@ export class GoalsController {
   async deleteGoal(@Req() request: ExtendedRequest) {
     const { params } = request;
 
-    return await this.goalsService.deleteGoal(params);
+    return await this.goalsService.deleteGoal(Number(params.id));
   }
 }
