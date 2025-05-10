@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { UserEntity } from '@/users/entities/user.entity';
 
 @Entity()
@@ -7,10 +13,14 @@ class TeamEntity {
   id: number;
 
   @Column()
-  title: string;
+  name: string;
 
-  @ManyToOne(() => UserEntity, (user) => user.teams)
-  user: UserEntity;
+  @Column(() => UserEntity)
+  created_by: UserEntity;
+
+  @ManyToMany(() => UserEntity, (user) => user.teams)
+  @JoinTable()
+  users: UserEntity[];
 }
 
 export { TeamEntity };

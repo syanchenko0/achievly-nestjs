@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { GoalEntity } from '@/goals/entities/goal.entity';
 import { EventEntity } from '@/events/entities/event.entity';
 import { NotificationEntity } from '@/notifications/entities/notification.entity';
@@ -31,7 +37,7 @@ class UserEntity {
   @OneToMany(() => ProjectEntity, (project) => project.user)
   projects: ProjectEntity[];
 
-  @OneToMany(() => TeamEntity, (team) => team.user)
+  @ManyToMany(() => TeamEntity, (team) => team.users)
   teams: TeamEntity[];
 }
 

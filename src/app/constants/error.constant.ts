@@ -15,6 +15,8 @@ export const USER_ALREADY_EXISTS = 'Пользователь уже сущест
 
 export const USER_NOT_FOUND = 'Пользователь не найден';
 
+export const TEAM_NOT_FOUND = 'Команда не найдена';
+
 export const GOAL_ID_MISSING = 'Отсутствует идентификатор цели';
 
 export const TASK_ID_MISSING = 'Отсутствует идентификатор задачи';
