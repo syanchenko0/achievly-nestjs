@@ -31,8 +31,8 @@ export class EventsService {
 
     const event = await this.eventRepository.save({
       title: data.title,
-      startTimestamp: data.startTimestamp,
-      endTimestamp: data.endTimestamp,
+      start_timestamp: data.start_timestamp,
+      end_timestamp: data.end_timestamp,
       user,
     });
 
@@ -54,8 +54,8 @@ export class EventsService {
 
     return await this.eventRepository.update(id, {
       title: data?.title,
-      startTimestamp: data?.startTimestamp,
-      endTimestamp: data?.endTimestamp,
+      start_timestamp: data?.start_timestamp,
+      end_timestamp: data?.end_timestamp,
     });
   }
 

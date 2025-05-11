@@ -45,7 +45,7 @@ class GoalDto {
     required: false,
     example: '2025-02-02T21:00:00.000Z',
   })
-  deadlineDate?: string;
+  deadline_date?: string;
 
   @ApiProperty({
     description: 'Примечание к цели',
@@ -61,7 +61,7 @@ class GoalDto {
     required: false,
     example: '2025-02-02T21:00:00.000Z',
   })
-  achievedDate?: string;
+  achieved_date?: string;
 
   @ApiProperty({
     description: 'Задачи цели',
@@ -77,9 +77,9 @@ class GoalDto {
     this.title = goal.title;
     this.category = goal.category;
     this.status = goal.status;
-    this.deadlineDate = goal.deadlineDate;
+    this.deadline_date = goal.deadline_date;
     this.note = goal.note;
-    this.achievedDate = goal.achievedDate;
+    this.achieved_date = goal.achieved_date;
     this.tasks = (goal.tasks || []).map((task) => new TaskDto(task));
   }
 }

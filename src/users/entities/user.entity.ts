@@ -10,11 +10,15 @@ import { EventEntity } from '@/events/entities/event.entity';
 import { NotificationEntity } from '@/notifications/entities/notification.entity';
 import { ProjectEntity } from '@/projects/entities/project.entity';
 import { TeamEntity } from '@/teams/entities/team.entity';
+import { InvitationTeamEntity } from '@/teams/entities/invitation.entity';
 
 @Entity()
 class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ generated: 'uuid' })
+  invite_id: string;
 
   @Column()
   username: string;
@@ -39,6 +43,12 @@ class UserEntity {
 
   @ManyToMany(() => TeamEntity, (team) => team.users)
   teams: TeamEntity[];
+
+  @OneToMany(
+    () => InvitationTeamEntity,
+    (invitation_team) => invitation_team.user,
+  )
+  invitation_teams: InvitationTeamEntity[];
 }
 
 export { UserEntity };

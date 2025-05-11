@@ -45,7 +45,7 @@ export class GoalsService {
       title: data.title,
       category: data.category as GoalCategoryEnum,
       status: GoalStatusEnum.Ongoing,
-      deadlineDate: data?.deadlineDate,
+      deadline_date: data?.deadline_date,
       note: data?.note,
       user,
     });
@@ -54,7 +54,7 @@ export class GoalsService {
       for (const task of data.tasks) {
         await this.taskRepository.save({
           title: task.title,
-          deadlineDate: task?.deadlineDate,
+          deadline_date: task?.deadline_date,
           note: task?.note,
           goal,
         });
@@ -98,9 +98,9 @@ export class GoalsService {
       const tasksTransformed = data.tasks.map((task) => ({
         id: task?.id || -1,
         title: task.title,
-        deadlineDate: task?.deadlineDate,
+        deadline_date: task?.deadline_date,
         note: task?.note,
-        doneDate: task?.doneDate,
+        done_date: task?.done_date,
         goal,
       }));
 
@@ -111,9 +111,9 @@ export class GoalsService {
       title: data?.title || goal?.title,
       category: (data?.category as GoalCategoryEnum) || goal.category,
       status: (data?.status as GoalStatusEnum) || goal.status,
-      deadlineDate: data?.deadlineDate || goal?.deadlineDate,
+      deadline_date: data?.deadline_date || goal?.deadline_date,
       note: data?.note || goal?.note,
-      achievedDate: data?.achievedDate || goal?.achievedDate,
+      achieved_date: data?.achieved_date || goal?.achieved_date,
     });
   }
 

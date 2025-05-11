@@ -21,7 +21,7 @@ class TaskDto {
     type: String,
     example: '2025-02-02T21:00:00.000Z',
   })
-  deadlineDate?: string;
+  deadline_date?: string;
 
   @ApiProperty({
     description: 'Примечание задачи',
@@ -35,14 +35,14 @@ class TaskDto {
     type: String,
     example: '2025-02-02T21:00:00.000Z',
   })
-  doneDate?: string;
+  done_date?: string;
 
   constructor(task: TaskEntity) {
     this.id = task.id;
     this.title = task.title;
-    this.deadlineDate = task?.deadlineDate;
+    this.deadline_date = task?.deadline_date;
     this.note = task?.note;
-    this.doneDate = task?.doneDate;
+    this.done_date = task?.done_date;
   }
 }
 

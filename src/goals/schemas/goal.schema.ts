@@ -8,16 +8,16 @@ const GetGoalsSchema = z.object({
 
 const CreateTaskSchema = z.object({
   title: z.string(ZOD_ERROR),
-  deadlineDate: z.string(ZOD_ERROR).optional(),
+  deadline_date: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
 });
 
 const UpdateTaskSchema = z.object({
   id: z.number(ZOD_ERROR).optional(),
   title: z.string(ZOD_ERROR),
-  deadlineDate: z.string(ZOD_ERROR).optional(),
+  deadline_date: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
-  doneDate: z.string(ZOD_ERROR).optional(),
+  done_date: z.string(ZOD_ERROR).optional(),
 });
 
 const CreateGoalSchema = z.object({
@@ -39,7 +39,7 @@ const CreateGoalSchema = z.object({
     'ecology',
     'socialActivity',
   ]),
-  deadlineDate: z.string(ZOD_ERROR).optional(),
+  deadline_date: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
   tasks: z.array(CreateTaskSchema).optional(),
 });
@@ -66,9 +66,9 @@ const UpdateGoalSchema = z.object({
     ])
     .optional(),
   status: z.enum(['ongoing', 'achieved']).optional(),
-  deadlineDate: z.string(ZOD_ERROR).optional(),
+  deadline_date: z.string(ZOD_ERROR).optional(),
   note: z.string(ZOD_ERROR).optional(),
-  achievedDate: z.string(ZOD_ERROR).optional(),
+  achieved_date: z.string(ZOD_ERROR).optional(),
   tasks: z.array(UpdateTaskSchema).optional(),
 });
 

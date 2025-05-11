@@ -24,7 +24,7 @@ class EventDto {
     required: true,
     example: 'Note',
   })
-  startTimestamp: number;
+  start_timestamp: number;
 
   @ApiProperty({
     description: 'Время окончания события',
@@ -32,13 +32,13 @@ class EventDto {
     required: true,
     example: 'Note',
   })
-  endTimestamp: number;
+  end_timestamp: number;
 
   constructor(event: EventEntity) {
     this.id = event.id;
     this.title = event.title;
-    this.startTimestamp = event.startTimestamp.getTime();
-    this.endTimestamp = event.endTimestamp.getTime();
+    this.start_timestamp = event.start_timestamp.getTime();
+    this.end_timestamp = event.end_timestamp.getTime();
   }
 }
 

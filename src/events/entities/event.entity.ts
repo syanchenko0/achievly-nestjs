@@ -17,20 +17,20 @@ class EventEntity {
   title: string;
 
   @Column({ nullable: false, type: 'timestamp' })
-  startTimestamp: Date;
+  start_timestamp: Date;
 
   @Column({ nullable: false, type: 'timestamp' })
-  endTimestamp: Date;
+  end_timestamp: Date;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  updatedAt: Date;
+  updated_at: Date;
 
   @ManyToOne(() => UserEntity, (user) => user.events)
   user: UserEntity;

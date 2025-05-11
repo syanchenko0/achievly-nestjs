@@ -34,23 +34,23 @@ class GoalEntity {
   status: GoalStatusEnum;
 
   @Column({ nullable: true })
-  deadlineDate?: string;
+  deadline_date?: string;
 
   @Column({ nullable: true })
   note?: string;
 
   @Column({ nullable: true })
-  achievedDate?: string;
+  achieved_date?: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  updatedAt: Date;
+  updated_at: Date;
 
   @ManyToOne(() => UserEntity, (user) => user.goals)
   user: UserEntity;

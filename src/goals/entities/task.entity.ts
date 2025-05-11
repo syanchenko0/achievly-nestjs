@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { GoalEntity } from '@/goals/entities/goal.entity';
 
-@Entity()
+@Entity({ name: 'goal_task' })
 class TaskEntity {
   @PrimaryGeneratedColumn()
   id: number;
@@ -17,23 +17,23 @@ class TaskEntity {
   title: string;
 
   @Column({ nullable: true })
-  deadlineDate?: string;
+  deadline_date?: string;
 
   @Column({ nullable: true })
   note?: string;
 
   @Column({ nullable: true })
-  doneDate?: string;
+  done_date?: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  updatedAt: Date;
+  updated_at: Date;
 
   @ManyToOne(() => GoalEntity, (goal) => goal.tasks)
   goal: GoalEntity;

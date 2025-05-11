@@ -15,7 +15,7 @@ class CreateEventBody {
     required: true,
     example: 'Note',
   })
-  startTimestamp: number;
+  start_timestamp: number;
 
   @ApiProperty({
     description: 'Время окончания события',
@@ -23,7 +23,7 @@ class CreateEventBody {
     required: true,
     example: 'Note',
   })
-  endTimestamp: number;
+  end_timestamp: number;
 }
 
 class UpdateEventBody {
@@ -41,7 +41,7 @@ class UpdateEventBody {
     required: true,
     example: 'Note',
   })
-  startTimestamp: number;
+  start_timestamp: number;
 
   @ApiProperty({
     description: 'Время окончания события',
@@ -49,7 +49,7 @@ class UpdateEventBody {
     required: true,
     example: 'Note',
   })
-  endTimestamp: number;
+  end_timestamp: number;
 }
 
 export { CreateEventBody, UpdateEventBody };

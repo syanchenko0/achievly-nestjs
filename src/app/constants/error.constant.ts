@@ -17,6 +17,8 @@ export const USER_NOT_FOUND = 'Пользователь не найден';
 
 export const TEAM_NOT_FOUND = 'Команда не найдена';
 
+export const INVITATION_TEAM_NOT_FOUND = 'Приглашение не найдено';
+
 export const GOAL_ID_MISSING = 'Отсутствует идентификатор цели';
 
 export const TASK_ID_MISSING = 'Отсутствует идентификатор задачи';

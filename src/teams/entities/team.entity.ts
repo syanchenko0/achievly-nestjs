@@ -3,9 +3,11 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserEntity } from '@/users/entities/user.entity';
+import { InvitationTeamEntity } from '@/teams/entities/invitation.entity';
 
 @Entity()
 class TeamEntity {
@@ -21,6 +23,12 @@ class TeamEntity {
   @ManyToMany(() => UserEntity, (user) => user.teams)
   @JoinTable()
   users: UserEntity[];
+
+  @OneToMany(
+    () => InvitationTeamEntity,
+    (invitationTeam) => invitationTeam.team,
+  )
+  invitations: InvitationTeamEntity[];
 }
 
 export { TeamEntity };
