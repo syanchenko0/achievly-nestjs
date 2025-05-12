@@ -9,6 +9,15 @@ class NotificationEntity {
   @Column()
   title: string;
 
+  @Column({ nullable: true })
+  description?: string;
+
+  @Column({ nullable: true })
+  accept?: string;
+
+  @Column({ nullable: true })
+  reject?: string;
+
   @ManyToOne(() => UserEntity, (user) => user.notifications)
   user: UserEntity;
 }

@@ -5,8 +5,4 @@ const createTeamSchema = z.object({
   name: z.string(ZOD_ERROR),
 });
 
-type CreateTeamBody = z.infer<typeof createTeamSchema>;
-
 export { createTeamSchema };
-
-export type { CreateTeamBody };

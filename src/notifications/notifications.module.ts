@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationEntity } from '@/notifications/entities/notification.entity';
+import { NotificationsGateway } from './notifications.gateway';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { NotificationEntity } from '@/notifications/entities/notification.entity
     TypeOrmModule.forFeature([NotificationEntity]),
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService],
+  providers: [NotificationsService, NotificationsGateway],
+  exports: [NotificationsService],
 })
 export class NotificationsModule {}

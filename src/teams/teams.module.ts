@@ -5,9 +5,18 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TeamEntity } from '@/teams/entities/team.entity';
+import { InvitationTeamEntity } from '@/teams/entities/invitation.entity';
+import { UsersModule } from '@/users/users.module';
+import { NotificationsModule } from '@/notifications/notifications.module';
 
 @Module({
-  imports: [ConfigModule, JwtModule, TypeOrmModule.forFeature([TeamEntity])],
+  imports: [
+    UsersModule,
+    NotificationsModule,
+    ConfigModule,
+    JwtModule,
+    TypeOrmModule.forFeature([TeamEntity, InvitationTeamEntity]),
+  ],
   controllers: [TeamsController],
   providers: [TeamsService],
 })
