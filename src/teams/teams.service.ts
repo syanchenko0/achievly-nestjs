@@ -97,9 +97,9 @@ export class TeamsService {
       team,
     });
 
-    await this.notificationsService.createNotification({
+    await this.notificationsService.createNotification(user.id, {
       title: 'Вы были приглашены в команду',
-      description: 'Перейдите по ссылке, чтобы принять приглашение',
+      description: 'Примите или отклоните приглашение',
       accept: `/teams/accept?token=${invitationTeam.accept_token}`,
       reject: `/teams/reject?token=${invitationTeam.reject_token}`,
     });

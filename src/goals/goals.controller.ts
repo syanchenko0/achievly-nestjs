@@ -45,7 +45,7 @@ export class GoalsController {
   @ApiOperation({ operationId: 'getGoals', summary: 'Get goals' })
   @ApiResponse({ status: 200, type: GoalDto, isArray: true })
   @ApiResponse({ status: 400, type: BadRequest })
-  @ApiQuery({ type: String, name: 'status' })
+  @ApiQuery({ type: String, name: 'status', required: false })
   async getGoals(@Req() request: ExtendedRequest) {
     const { user, query } = request;
 

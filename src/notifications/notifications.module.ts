@@ -6,10 +6,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationEntity } from '@/notifications/entities/notification.entity';
 import { NotificationsGateway } from './notifications.gateway';
+import { UsersModule } from '@/users/users.module';
 
 @Module({
   imports: [
     ConfigModule,
+    UsersModule,
     JwtModule,
     TypeOrmModule.forFeature([NotificationEntity]),
   ],

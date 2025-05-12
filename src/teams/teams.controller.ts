@@ -4,6 +4,7 @@ import {
   Get,
   Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import { TeamsService } from '@/teams/teams.service';
 import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
@@ -13,10 +14,14 @@ import {
   ApiExcludeEndpoint,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { CreateTeamBody, InviteUserBody } from '@/teams/dto/swagger.dto';
 import { TeamDto } from '@/teams/dto/team.dto';
+import { JwtAuthGuard } from '@/auth/guards/auth.guard';
 
+@ApiTags('Teams')
+@UseGuards(JwtAuthGuard)
 @Controller('teams')
 export class TeamsController {
   constructor(private readonly teamService: TeamsService) {}

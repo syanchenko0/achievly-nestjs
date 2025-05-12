@@ -1,11 +1,12 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiExcludeEndpoint } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
 
 import { AuthService } from '@/auth/auth.service';
 import { ISocialProfile } from '@/auth/types/auth.type';
+import { JwtAuthGuard } from '@/auth/guards/auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -13,6 +14,13 @@ export class AuthController {
     private readonly authService: AuthService,
     private configService: ConfigService,
   ) {}
+
+  @Get('/check')
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 401 })
+  @ApiOperation({ summary: 'Проверка авторизации', operationId: 'checkAuth' })
+  async checkAuth() {}
 
   @ApiExcludeEndpoint()
   @Get('/google')

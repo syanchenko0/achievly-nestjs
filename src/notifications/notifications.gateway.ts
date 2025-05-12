@@ -22,7 +22,7 @@ export class NotificationsGateway
     console.log('Client disconnected:', client.id);
   }
 
-  sendNotification(body: NotificationBody) {
-    this.server.emit('notification_send', body);
+  sendNotification(client_id: string, body: NotificationBody) {
+    this.server.in(client_id).emit('notification_send', body);
   }
 }

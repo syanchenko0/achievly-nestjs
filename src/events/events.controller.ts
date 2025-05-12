@@ -1,11 +1,28 @@
-import { Controller, Delete, Get, Patch, Post, Req } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
 import { CreateEventBody, UpdateEventBody } from '@/events/dto/swagger.dto';
 import { EventDto } from '@/events/dto/event.dto';
 import { EventsService } from '@/events/events.service';
 import { UpdateResult } from 'typeorm';
+import { JwtAuthGuard } from '@/auth/guards/auth.guard';
 
+@ApiTags('Events')
+@UseGuards(JwtAuthGuard)
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
