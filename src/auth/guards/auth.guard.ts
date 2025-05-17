@@ -14,12 +14,14 @@ import {
   TOKEN_EXPIRATION_REFRESH,
 } from '@/app/constants/token.contant';
 import { WRONG_TOKEN } from '@/app/constants/error.constant';
+import { UsersService } from '@/users/users.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
+    private usersService: UsersService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -38,6 +40,12 @@ export class JwtAuthGuard implements CanActivate {
             secret: this.configService.get('JWT_SECRET_KEY'),
           },
         );
+
+        const user = await this.usersService.getUserById(tokenParsed.id);
+
+        if (!user) {
+          throw new UnauthorizedException(WRONG_TOKEN);
+        }
 
         if (!refreshToken) {
           const refreshToken = await this.jwtService.signAsync(tokenParsed, {
@@ -70,6 +78,12 @@ export class JwtAuthGuard implements CanActivate {
             secret: this.configService.get('JWT_SECRET_KEY'),
           },
         );
+
+        const user = await this.usersService.getUserById(tokenParsed.id);
+
+        if (!user) {
+          throw new UnauthorizedException(WRONG_TOKEN);
+        }
 
         const accessToken = await this.jwtService.signAsync(tokenParsed, {
           expiresIn: TOKEN_EXPIRATION_ACCESS,

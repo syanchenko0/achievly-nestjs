@@ -1,6 +1,6 @@
-import { UserDto } from '@/users/dto/user.dto';
 import { TeamEntity } from '@/teams/entities/team.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { MemberDto } from '@/teams/dto/swagger.dto';
 
 class TeamDto {
   @ApiProperty({
@@ -18,26 +18,56 @@ class TeamDto {
   name: string;
 
   @ApiProperty({
-    type: UserDto,
+    type: String,
     required: true,
-    description: 'Создатель команды',
+    description: 'Роль пользователя в команде',
   })
-  created_by: UserDto;
+  user_role: string;
 
   @ApiProperty({
-    type: UserDto,
+    type: MemberDto,
     required: true,
     isArray: true,
     description: 'Участники команды',
   })
-  users: UserDto[];
+  members: MemberDto[];
+
+  constructor(team: TeamEntity, user_id: number) {
+    this.id = team.id;
+    this.name = team.name;
+    this.user_role = team.members.find((member) => member.user.id === user_id)
+      ?.role as string;
+    this.members = team.members?.map((member) => new MemberDto(member));
+  }
+}
+
+class TeamGeneralInfoDto {
+  @ApiProperty({
+    type: Number,
+    required: true,
+    description: 'ID команды',
+  })
+  id: number;
+
+  @ApiProperty({
+    type: String,
+    required: true,
+    description: 'Наименование команды',
+  })
+  name: string;
+
+  @ApiProperty({
+    type: Number,
+    required: true,
+    description: 'Количество участников команды',
+  })
+  members_length: number;
 
   constructor(team: TeamEntity) {
     this.id = team.id;
     this.name = team.name;
-    this.created_by = new UserDto(team.created_by);
-    this.users = team.users?.map((user) => new UserDto(user));
+    this.members_length = team.members.length;
   }
 }
 
-export { TeamDto };
+export { TeamDto, TeamGeneralInfoDto };

@@ -3,26 +3,49 @@ export const ZOD_ERROR = {
   invalid_type_error: 'Введите корректное значение',
 };
 
-export const INTERNAL_ERROR = 'Ошибка сервера';
+const WRONG_BODY = 'Некорректное тело запроса';
 
-export const WRONG_BODY = 'Некорректное тело запроса';
+const WRONG_PARAMS = 'Некорректные параметры запроса';
 
-export const WRONG_PARAMS = 'Некорректные параметры запроса';
+const WRONG_TOKEN = 'Неправильный токен';
 
-export const WRONG_TOKEN = 'Неправильный токен';
+const USER_NOT_FOUND = 'Пользователь не найден';
 
-export const USER_ALREADY_EXISTS = 'Пользователь уже существует';
+const TEAM_NOT_FOUND = 'Команда не найдена';
 
-export const USER_NOT_FOUND = 'Пользователь не найден';
+const TEAM_NOT_JOINED = 'Пользователь не состоит в команде';
 
-export const TEAM_NOT_FOUND = 'Команда не найдена';
+const TEAM_ALREADY_JOINED = 'Пользователь уже состоит в команде';
 
-export const INVITATION_TEAM_NOT_FOUND = 'Приглашение не найдено';
+const TEAM_DELETE_FORBIDDEN = 'Удаление команды недоступно для пользователя';
 
-export const GOAL_ID_MISSING = 'Отсутствует идентификатор цели';
+const TEAM_FORBIDDEN = 'Команда недоступна для пользователя';
 
-export const TASK_ID_MISSING = 'Отсутствует идентификатор задачи';
+const MEMBER_NOT_FOUND = 'Участник команды не найден';
 
-export const GOAL_NOT_FOUND = 'Цель не найдена';
+const MEMBER_UPDATE_FORBIDDEN =
+  'Редактирование участника недоступно для пользователя';
 
-export const TASK_NOT_FOUND = 'Задача не найдена';
+const MEMBER_DELETE_FORBIDDEN =
+  'Удаление участника недоступно для пользователя';
+
+const PROJECT_CREATE_FORBIDDEN = 'Создание проекта недоступно для пользователя';
+
+const PROJECT_NOT_FOUND = 'Проект не найден';
+
+export {
+  WRONG_BODY,
+  WRONG_PARAMS,
+  WRONG_TOKEN,
+  USER_NOT_FOUND,
+  TEAM_NOT_FOUND,
+  TEAM_NOT_JOINED,
+  TEAM_ALREADY_JOINED,
+  TEAM_DELETE_FORBIDDEN,
+  TEAM_FORBIDDEN,
+  MEMBER_NOT_FOUND,
+  MEMBER_UPDATE_FORBIDDEN,
+  MEMBER_DELETE_FORBIDDEN,
+  PROJECT_CREATE_FORBIDDEN,
+  PROJECT_NOT_FOUND,
+};

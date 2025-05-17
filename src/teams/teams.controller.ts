@@ -1,23 +1,26 @@
 import {
   BadRequestException,
   Controller,
+  Delete,
   Get,
+  Patch,
   Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { TeamsService } from '@/teams/teams.service';
 import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
-import { WRONG_BODY, WRONG_PARAMS } from '@/app/constants/error.constant';
+import { WRONG_PARAMS } from '@/app/constants/error.constant';
 import {
   ApiBody,
-  ApiExcludeEndpoint,
   ApiOperation,
+  ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateTeamBody, InviteUserBody } from '@/teams/dto/swagger.dto';
-import { TeamDto } from '@/teams/dto/team.dto';
+import { CreateTeamBody, UpdateTeamMemberBody } from '@/teams/dto/swagger.dto';
+import { TeamDto, TeamGeneralInfoDto } from '@/teams/dto/team.dto';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
 
 @ApiTags('Teams')
@@ -41,7 +44,7 @@ export class TeamsController {
 
   @Get('/')
   @ApiOperation({
-    operationId: 'getTeamsByUserId',
+    operationId: 'getTeams',
     summary: 'Get teams by user id',
   })
   @ApiResponse({ status: 200, type: TeamDto, isArray: true })
@@ -49,68 +52,193 @@ export class TeamsController {
   async getTeams(@Req() request: ExtendedRequest) {
     const { user } = request;
 
-    if (!user?.id && Number.isNaN(Number(user.id))) {
+    if (!user?.id || Number.isNaN(Number(user.id))) {
       throw new BadRequestException(WRONG_PARAMS);
     }
 
     return this.teamService.getTeamsByUserId(Number(user.id));
   }
 
-  @Get('/:id')
-  @ApiOperation({ operationId: 'getTeamById', summary: 'Get team by id' })
-  @ApiResponse({ status: 200, type: TeamDto })
+  @Get('/:team_id')
+  @ApiOperation({
+    operationId: 'getTeamGeneralInfo',
+    summary: 'Get team general info',
+  })
+  @ApiResponse({ status: 200, type: TeamGeneralInfoDto })
   @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'team_id', type: 'string' })
   async getTeam(@Req() request: ExtendedRequest) {
     const { params } = request;
 
-    if (!params?.id && Number.isNaN(Number(params.id))) {
+    if (!params?.team_id || Number.isNaN(Number(params.team_id))) {
       throw new BadRequestException(WRONG_PARAMS);
     }
 
-    return this.teamService.getTeamById(Number(params.id));
+    return this.teamService.getTeamGeneralInfo(Number(params.team_id));
   }
 
-  @Post('/invite')
-  @ApiOperation({ operationId: 'inviteUser', summary: 'Invite user to team' })
+  @Get('/:team_id/join-link')
+  @ApiOperation({
+    operationId: 'getTeamJoinLink',
+    summary: 'Get team join link',
+  })
+  @ApiResponse({ status: 200, type: String })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'team_id', type: 'string' })
+  async getTeamJoinLink(@Req() request: ExtendedRequest) {
+    const { params } = request;
+
+    if (!params?.team_id || Number.isNaN(Number(params.team_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.teamService.getJoinLink(Number(params.team_id));
+  }
+
+  @Get('/:team_id/members/:member_id/projects_rights')
+  @ApiOperation({
+    operationId: 'getProjectsRights',
+    summary: 'Get projects rights by member id',
+  })
+  @ApiResponse({ status: 200, type: String })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'team_id', type: 'string' })
+  @ApiParam({ name: 'member_id', type: 'string' })
+  async getProjectsRightsByMemberId(@Req() request: ExtendedRequest) {
+    const { params } = request;
+
+    if (
+      !params?.team_id ||
+      Number.isNaN(Number(params.team_id)) ||
+      !params?.member_id ||
+      Number.isNaN(Number(params.member_id))
+    ) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.teamService.getProjectsRightsByMemberId(
+      Number(params.team_id),
+      Number(params.member_id),
+    );
+  }
+
+  @Patch(':team_id/members/:member_id')
+  @ApiOperation({
+    operationId: 'updateTeamMember',
+    summary: 'Update team member',
+  })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400, type: BadRequest })
-  @ApiBody({ type: InviteUserBody })
-  async inviteUser(
+  @ApiParam({ name: 'team_id', type: 'string' })
+  @ApiParam({ name: 'member_id', type: 'string' })
+  @ApiBody({ type: UpdateTeamMemberBody })
+  async updateTeamMember(
     @Req()
-    request: Omit<ExtendedRequest, 'body'> & {
-      body: InviteUserBody;
-    },
+    request: Omit<ExtendedRequest, 'body'> & { body: UpdateTeamMemberBody },
   ) {
-    const { body } = request;
+    const { user, params, body } = request;
 
-    if (!body.user_invite_id || !body.team_id) {
-      throw new BadRequestException(WRONG_BODY);
-    }
-
-    return this.teamService.inviteUser(body.user_invite_id, body.team_id);
-  }
-
-  @Post('/accept')
-  @ApiExcludeEndpoint()
-  async acceptInvite(@Req() request: ExtendedRequest) {
-    const { query } = request;
-
-    if (!query?.token) {
+    if (
+      !params?.team_id ||
+      Number.isNaN(Number(params.team_id)) ||
+      !params?.member_id ||
+      Number.isNaN(Number(params.member_id))
+    ) {
       throw new BadRequestException(WRONG_PARAMS);
     }
 
-    await this.teamService.acceptInvite(query.token as string);
+    return this.teamService.updateTeamMember(
+      Number(user.id),
+      Number(params.team_id),
+      Number(params.member_id),
+      body,
+    );
   }
 
-  @Post('/reject')
-  @ApiExcludeEndpoint()
-  async rejectInvite(@Req() request: ExtendedRequest) {
-    const { query } = request;
+  @Post('/:id/join')
+  @ApiOperation({ operationId: 'joinTeam', summary: 'Join to team' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'id', type: 'string' })
+  @ApiQuery({ name: 'jat', type: 'string' })
+  async joinToTeam(
+    @Req()
+    request: ExtendedRequest,
+  ) {
+    const { user, params, query } = request;
 
-    if (!query?.token) {
+    if (!params?.id || Number.isNaN(Number(params.id)) || !query?.jat) {
       throw new BadRequestException(WRONG_PARAMS);
     }
 
-    await this.teamService.rejectInvite(query.token as string);
+    return this.teamService.joinToTeam(
+      Number(user.id),
+      Number(params.id),
+      query.jat as string,
+    );
+  }
+
+  @Post('/:team_id/leave')
+  @ApiOperation({
+    operationId: 'leaveFromTeam',
+    summary: 'Leave from team',
+  })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'team_id', type: 'string' })
+  async leaveFromTeam(@Req() request: ExtendedRequest) {
+    const { user, params } = request;
+
+    if (!params?.team_id || Number.isNaN(Number(params.team_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.teamService.leaveFromTeam(
+      Number(params.team_id),
+      Number(user.id),
+    );
+  }
+
+  @Delete('/:team_id')
+  @ApiOperation({ operationId: 'deleteTeam', summary: 'Delete team' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'team_id', type: 'string' })
+  async deleteTeam(@Req() request: ExtendedRequest) {
+    const { user, params } = request;
+
+    if (!params?.team_id || Number.isNaN(Number(params.team_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.teamService.deleteTeam(Number(params.team_id), Number(user.id));
+  }
+
+  @Delete('/:team_id/members/:member_id')
+  @ApiOperation({
+    operationId: 'deleteTeamMember',
+    summary: 'Delete team member',
+  })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'team_id', type: 'string' })
+  @ApiParam({ name: 'member_id', type: 'string' })
+  async deleteTeamMember(@Req() request: ExtendedRequest) {
+    const { user, params } = request;
+
+    if (
+      !params?.team_id ||
+      Number.isNaN(Number(params.team_id)) ||
+      !params?.member_id ||
+      Number.isNaN(Number(params.member_id))
+    ) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.teamService.deleteMember(
+      Number(params.team_id),
+      Number(params.member_id),
+      Number(user.id),
+    );
   }
 }

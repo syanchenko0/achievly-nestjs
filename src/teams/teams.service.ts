@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,28 +8,41 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TeamEntity } from '@/teams/entities/team.entity';
 import { RequestUser } from '@/app/types/common.type';
-import { createTeamSchema } from '@/teams/schemas/team.schema';
+import {
+  createTeamSchema,
+  updateTeamMemberSchema,
+} from '@/teams/schemas/teams.schema';
 import { UsersService } from '@/users/users.service';
 import {
-  INVITATION_TEAM_NOT_FOUND,
+  MEMBER_DELETE_FORBIDDEN,
+  MEMBER_NOT_FOUND,
+  MEMBER_UPDATE_FORBIDDEN,
+  TEAM_ALREADY_JOINED,
+  TEAM_DELETE_FORBIDDEN,
   TEAM_NOT_FOUND,
+  TEAM_NOT_JOINED,
   USER_NOT_FOUND,
   WRONG_BODY,
+  WRONG_PARAMS,
 } from '@/app/constants/error.constant';
-import { TeamDto } from '@/teams/dto/team.dto';
-import { InvitationTeamEntity } from '@/teams/entities/invitation.entity';
-import { NotificationsService } from '@/notifications/notifications.service';
-import { CreateTeamBody } from '@/teams/dto/swagger.dto';
+import { TeamDto, TeamGeneralInfoDto } from '@/teams/dto/team.dto';
+import { CreateTeamBody, UpdateTeamMemberBody } from '@/teams/dto/swagger.dto';
+import { MemberRoles } from '@/teams/types/teams.type';
+import { MemberEntity } from '@/teams/entities/member.entity';
+import {
+  findAdmin,
+  findOwner,
+  updateMemberProjectsRights,
+} from '@/teams/teams.helper';
 
 @Injectable()
 export class TeamsService {
   constructor(
     @InjectRepository(TeamEntity)
     private readonly teamRepository: Repository<TeamEntity>,
-    @InjectRepository(InvitationTeamEntity)
-    private readonly invitationTeamRepository: Repository<InvitationTeamEntity>,
+    @InjectRepository(MemberEntity)
+    private readonly memberRepository: Repository<MemberEntity>,
     private readonly usersService: UsersService,
-    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createTeam({ id }: RequestUser, body: CreateTeamBody) {
@@ -46,93 +60,271 @@ export class TeamsService {
 
     const team = await this.teamRepository.save({
       name: body.name,
-      created_by: user,
+      members: [],
       users: [user],
     });
 
-    return new TeamDto(team);
+    const member = await this.memberRepository.save({
+      user,
+      team,
+      role: MemberRoles.owner,
+    });
+
+    team.members.push(member);
+
+    await this.teamRepository.save(team);
+
+    return new TeamDto(team, user.id);
   }
 
-  async getTeamById(id: number) {
+  async getTeamGeneralInfo(team_id: number) {
     const team = await this.teamRepository.findOne({
-      where: { id },
-      relations: ['users'],
+      where: { id: team_id },
+      relations: ['members'],
     });
 
     if (!team) {
       throw new NotFoundException(TEAM_NOT_FOUND);
     }
 
-    return new TeamDto(team);
+    return new TeamGeneralInfoDto(team);
   }
 
-  async getTeamsByUserId(id: number) {
+  async getTeamById(team_id: number) {
+    return await this.teamRepository.findOne({
+      where: { id: team_id },
+      relations: ['members', 'members.user'],
+    });
+  }
+
+  async getTeamsByUserId(user_id: number) {
     const teams = await this.teamRepository.find({
       where: {
         users: {
-          id,
+          id: user_id,
         },
       },
-      relations: ['users'],
+      relations: ['members', 'members.team'],
     });
 
-    return (teams || []).map((team) => new TeamDto(team));
+    return (teams || []).map((team) => new TeamDto(team, user_id));
   }
 
-  async inviteUser(user_invite_id: string, team_id: number) {
-    const user = await this.usersService.getUserByInviteId(user_invite_id);
+  async getProjectsRightsByMemberId(team_id: number, member_id: number) {
+    const member = await this.memberRepository.findOneBy({ id: member_id });
 
-    if (!user) {
-      throw new NotFoundException(USER_NOT_FOUND);
+    if (!member) {
+      throw new NotFoundException(MEMBER_NOT_FOUND);
     }
 
+    if (member.team.id !== team_id) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return member.projects_rights;
+  }
+
+  async updateTeamMember(
+    user_id: number,
+    team_id: number,
+    member_id: number,
+    body: UpdateTeamMemberBody,
+  ) {
     const team = await this.teamRepository.findOneBy({ id: team_id });
 
     if (!team) {
       throw new NotFoundException(TEAM_NOT_FOUND);
     }
 
-    const invitationTeam = await this.invitationTeamRepository.save({
+    const member = await this.memberRepository.findOneBy({ id: member_id });
+
+    if (!member) {
+      throw new NotFoundException(MEMBER_NOT_FOUND);
+    }
+
+    const user = await this.usersService.getUserById(user_id);
+
+    if (!user) {
+      throw new NotFoundException(USER_NOT_FOUND);
+    }
+
+    const { error } = updateTeamMemberSchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    const isOwner = findOwner(team.members, user.id);
+
+    const isAdmin = findAdmin(team.members, user.id);
+
+    if (isOwner || (isAdmin && member.role === MemberRoles.member)) {
+      member.projects_rights = updateMemberProjectsRights(
+        member,
+        body.projects_rights,
+      );
+
+      await this.memberRepository.save(member);
+
+      if (isOwner) {
+        member.role = body.role as MemberRoles;
+
+        await this.memberRepository.save(member);
+      }
+
+      team.members = team.members.map((m) => {
+        if (m.id === member_id) {
+          return member;
+        }
+
+        return m;
+      });
+
+      return new TeamDto(team, user.id);
+    }
+
+    throw new ForbiddenException(MEMBER_UPDATE_FORBIDDEN);
+  }
+
+  async getJoinLink(team_id: number) {
+    const team = await this.teamRepository.findOneBy({ id: team_id });
+
+    if (!team) {
+      throw new NotFoundException(TEAM_NOT_FOUND);
+    }
+
+    return `/teams/${team.id}/join?jat=${team.join_access_token}`;
+  }
+
+  async joinToTeam(
+    user_id: number,
+    team_id: number,
+    join_access_token: string,
+  ) {
+    const team = await this.teamRepository.findOne({
+      where: { id: team_id },
+      relations: ['users', 'members', 'projects'],
+    });
+
+    const user = await this.usersService.getUserById(user_id);
+
+    if (!team) {
+      throw new NotFoundException(TEAM_NOT_FOUND);
+    }
+
+    if (team.join_access_token !== join_access_token) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    if (!user) {
+      throw new NotFoundException(USER_NOT_FOUND);
+    }
+
+    if (team.users.some((u) => u.id === user.id)) {
+      throw new BadRequestException(TEAM_ALREADY_JOINED);
+    }
+
+    team.users.push(user);
+
+    const projectIds = team.projects?.map((p) => p.id);
+
+    const member = await this.memberRepository.save({
       user,
       team,
+      role: MemberRoles.member,
+      projects_rights: projectIds?.map((project_id) => ({
+        project_id,
+        create: false,
+        read: false,
+        update: false,
+        delete: false,
+      })),
     });
 
-    await this.notificationsService.createNotification(user.id, {
-      title: 'Вы были приглашены в команду',
-      description: 'Примите или отклоните приглашение',
-      accept: `/teams/accept?token=${invitationTeam.accept_token}`,
-      reject: `/teams/reject?token=${invitationTeam.reject_token}`,
+    team.members.push(member);
+
+    await this.teamRepository.save(team);
+  }
+
+  async leaveFromTeam(team_id: number, user_id: number) {
+    const team = await this.teamRepository.findOne({
+      where: { id: team_id },
+      relations: ['users', 'members'],
+    });
+
+    if (!team) {
+      throw new NotFoundException(TEAM_NOT_FOUND);
+    }
+
+    const user = await this.usersService.getUserById(user_id);
+
+    if (!user) {
+      throw new NotFoundException(USER_NOT_FOUND);
+    }
+
+    if (!team.users.some((u) => u.id === user.id)) {
+      throw new BadRequestException(TEAM_NOT_JOINED);
+    }
+
+    team.members = team.members.filter((m) => m.user.id !== user.id);
+    team.users = team.users.filter((u) => u.id !== user.id);
+
+    await this.teamRepository.save(team);
+
+    await this.memberRepository.delete({
+      team: { id: team_id },
+      user: { id: user_id },
     });
   }
 
-  async acceptInvite(accept_token: string) {
-    const invitation = await this.invitationTeamRepository.findOne({
-      where: { accept_token },
-      relations: ['user', 'team'],
+  async deleteTeam(team_id: number, user_id: number) {
+    const team = await this.teamRepository.findOne({
+      where: { id: team_id },
+      relations: ['members'],
     });
 
-    if (!invitation) {
-      throw new NotFoundException(INVITATION_TEAM_NOT_FOUND);
+    if (!team) {
+      throw new NotFoundException(TEAM_NOT_FOUND);
     }
 
-    const { user, team } = invitation;
+    const isOwner = findOwner(team.members, user_id);
 
-    await this.teamRepository.update(team.id, {
-      users: [...(team?.users || []), user],
-    });
+    if (!isOwner) {
+      throw new ForbiddenException(TEAM_DELETE_FORBIDDEN);
+    }
 
-    await this.invitationTeamRepository.delete({ id: invitation.id });
+    return await this.teamRepository.delete({ id: team_id });
   }
 
-  async rejectInvite(reject_token: string) {
-    const invitation = await this.invitationTeamRepository.findOne({
-      where: { reject_token },
+  async deleteMember(team_id: number, member_id: number, user_id: number) {
+    const team = await this.teamRepository.findOne({
+      where: { id: team_id },
+      relations: ['members'],
     });
 
-    if (!invitation) {
-      throw new NotFoundException(INVITATION_TEAM_NOT_FOUND);
+    if (!team) {
+      throw new NotFoundException(TEAM_NOT_FOUND);
     }
 
-    await this.invitationTeamRepository.delete({ id: invitation.id });
+    const member = await this.memberRepository.findOneBy({ id: member_id });
+
+    if (!member) {
+      throw new NotFoundException(MEMBER_NOT_FOUND);
+    }
+
+    const isOwner = findOwner(team.members, user_id);
+
+    const isAdmin = findAdmin(team.members, user_id);
+
+    if (!isOwner && !(isAdmin && member.role === MemberRoles.member)) {
+      throw new ForbiddenException(MEMBER_DELETE_FORBIDDEN);
+    }
+
+    team.members = team.members.filter((m) => m.id !== member_id);
+    team.users = team.users.filter((u) => u.id !== member.user.id);
+
+    await this.teamRepository.save(team);
+
+    return await this.memberRepository.delete({ id: member_id });
   }
 }

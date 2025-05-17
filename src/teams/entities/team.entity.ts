@@ -7,7 +7,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserEntity } from '@/users/entities/user.entity';
-import { InvitationTeamEntity } from '@/teams/entities/invitation.entity';
+import { MemberEntity } from '@/teams/entities/member.entity';
+import { ProjectEntity } from '@/projects/entities/project.entity';
 
 @Entity()
 class TeamEntity {
@@ -17,18 +18,18 @@ class TeamEntity {
   @Column()
   name: string;
 
-  @Column(() => UserEntity)
-  created_by: UserEntity;
+  @Column({ generated: 'uuid' })
+  join_access_token: string;
+
+  @OneToMany(() => MemberEntity, (member) => member.team)
+  members: MemberEntity[];
+
+  @OneToMany(() => ProjectEntity, (project) => project.team)
+  projects?: ProjectEntity[];
 
   @ManyToMany(() => UserEntity, (user) => user.teams)
   @JoinTable()
   users: UserEntity[];
-
-  @OneToMany(
-    () => InvitationTeamEntity,
-    (invitationTeam) => invitationTeam.team,
-  )
-  invitations: InvitationTeamEntity[];
 }
 
 export { TeamEntity };
