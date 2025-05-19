@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { TeamsService } from '@/teams/teams.service';
 import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
-import { WRONG_PARAMS } from '@/app/constants/error.constant';
+import { TEAM_NOT_FOUND, WRONG_PARAMS } from '@/app/constants/error.constant';
 import {
   ApiBody,
   ApiOperation,
@@ -22,6 +22,7 @@ import {
 import { CreateTeamBody, UpdateTeamMemberBody } from '@/teams/dto/swagger.dto';
 import { TeamDto, TeamGeneralInfoDto } from '@/teams/dto/team.dto';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
+import { TeamIncludeGuard } from '@/teams/guards/teams.guard';
 
 @ApiTags('Teams')
 @UseGuards(JwtAuthGuard)
@@ -59,7 +60,32 @@ export class TeamsController {
     return this.teamService.getTeamsByUserId(Number(user.id));
   }
 
+  @UseGuards(TeamIncludeGuard)
   @Get('/:team_id')
+  @ApiOperation({
+    operationId: 'getTeam',
+    summary: 'Get team by id',
+  })
+  @ApiResponse({ status: 200, type: TeamDto })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'team_id', type: 'string' })
+  async getTeam(@Req() request: ExtendedRequest) {
+    const { params, user } = request;
+
+    if (!params?.team_id || Number.isNaN(Number(params.team_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    const team = await this.teamService.getTeamById(Number(params.team_id));
+
+    if (!team) {
+      throw new BadRequestException(TEAM_NOT_FOUND);
+    }
+
+    return new TeamDto(team, user.id);
+  }
+
+  @Get('/:team_id/info')
   @ApiOperation({
     operationId: 'getTeamGeneralInfo',
     summary: 'Get team general info',
@@ -67,7 +93,7 @@ export class TeamsController {
   @ApiResponse({ status: 200, type: TeamGeneralInfoDto })
   @ApiResponse({ status: 400, type: BadRequest })
   @ApiParam({ name: 'team_id', type: 'string' })
-  async getTeam(@Req() request: ExtendedRequest) {
+  async getTeamGeneralInfo(@Req() request: ExtendedRequest) {
     const { params } = request;
 
     if (!params?.team_id || Number.isNaN(Number(params.team_id))) {

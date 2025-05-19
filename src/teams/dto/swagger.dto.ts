@@ -52,6 +52,13 @@ class UpdateTeamMemberBody {
 
 class MemberDto {
   @ApiProperty({
+    type: Number,
+    required: true,
+    description: 'ID участника',
+  })
+  id: number;
+
+  @ApiProperty({
     type: UserDto,
     required: true,
     description: 'Данные пользователя',
@@ -62,6 +69,7 @@ class MemberDto {
   role: MemberRoles;
 
   constructor(member: MemberDto) {
+    this.id = member.id;
     this.user = new UserDto(member.user as UserEntity);
     this.role = member.role;
   }

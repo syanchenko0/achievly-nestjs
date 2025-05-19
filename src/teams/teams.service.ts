@@ -93,7 +93,7 @@ export class TeamsService {
   async getTeamById(team_id: number) {
     return await this.teamRepository.findOne({
       where: { id: team_id },
-      relations: ['members', 'members.user'],
+      relations: ['members', 'members.team', 'users'],
     });
   }
 
@@ -299,7 +299,7 @@ export class TeamsService {
   async deleteMember(team_id: number, member_id: number, user_id: number) {
     const team = await this.teamRepository.findOne({
       where: { id: team_id },
-      relations: ['members'],
+      relations: ['members', 'users'],
     });
 
     if (!team) {
@@ -310,6 +310,10 @@ export class TeamsService {
 
     if (!member) {
       throw new NotFoundException(MEMBER_NOT_FOUND);
+    }
+
+    if (user_id === member.user.id) {
+      throw new BadRequestException(MEMBER_DELETE_FORBIDDEN);
     }
 
     const isOwner = findOwner(team.members, user_id);

@@ -27,7 +27,7 @@ class TeamIncludeGuard implements CanActivate {
       throw new UnauthorizedException(WRONG_TOKEN);
     }
 
-    const requestTeamId = params?.id;
+    const requestTeamId = params?.team_id;
 
     if (!requestTeamId && Number.isNaN(Number(requestTeamId))) {
       throw new BadRequestException(WRONG_PARAMS);
