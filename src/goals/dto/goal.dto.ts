@@ -43,6 +43,7 @@ class GoalDto {
     description: 'Дата окончания цели',
     type: String,
     required: false,
+    nullable: true,
     example: '2025-02-02T21:00:00.000Z',
   })
   deadline_date?: string;
@@ -51,6 +52,7 @@ class GoalDto {
     description: 'Примечание к цели',
     type: String,
     required: false,
+    nullable: true,
     example: 'Note',
   })
   note?: string;
@@ -59,6 +61,7 @@ class GoalDto {
     description: 'Дата выполнения цели',
     type: String,
     required: false,
+    nullable: true,
     example: '2025-02-02T21:00:00.000Z',
   })
   achieved_date?: string;
@@ -80,7 +83,7 @@ class GoalDto {
     this.deadline_date = goal.deadline_date;
     this.note = goal.note;
     this.achieved_date = goal.achieved_date;
-    this.tasks = (goal.tasks || []).map((task) => new TaskDto(task));
+    this.tasks = goal.tasks?.map((task) => new TaskDto(task)) || null;
   }
 }
 

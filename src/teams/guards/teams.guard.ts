@@ -21,13 +21,13 @@ class TeamIncludeGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: ExtendedRequest = context.switchToHttp().getRequest();
 
-    const { params } = request;
+    const { params, query } = request;
 
     if (!request.user) {
       throw new UnauthorizedException(WRONG_TOKEN);
     }
 
-    const requestTeamId = params?.team_id;
+    const requestTeamId = params?.team_id || query?.team_id;
 
     if (!requestTeamId && Number.isNaN(Number(requestTeamId))) {
       throw new BadRequestException(WRONG_PARAMS);

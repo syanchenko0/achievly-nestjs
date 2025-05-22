@@ -107,21 +107,9 @@ export class TeamsService {
       relations: ['members', 'members.team'],
     });
 
-    return (teams || []).map((team) => new TeamDto(team, user_id));
-  }
-
-  async getProjectsRightsByMemberId(team_id: number, member_id: number) {
-    const member = await this.memberRepository.findOneBy({ id: member_id });
-
-    if (!member) {
-      throw new NotFoundException(MEMBER_NOT_FOUND);
-    }
-
-    if (member.team.id !== team_id) {
-      throw new BadRequestException(WRONG_PARAMS);
-    }
-
-    return member.projects_rights;
+    return (teams || [])
+      .sort((a, b) => a.id - b.id)
+      .map((team) => new TeamDto(team, user_id));
   }
 
   async updateTeamMember(
@@ -130,7 +118,10 @@ export class TeamsService {
     member_id: number,
     body: UpdateTeamMemberBody,
   ) {
-    const team = await this.teamRepository.findOneBy({ id: team_id });
+    const team = await this.teamRepository.findOne({
+      where: { id: team_id },
+      relations: ['members'],
+    });
 
     if (!team) {
       throw new NotFoundException(TEAM_NOT_FOUND);
@@ -186,6 +177,42 @@ export class TeamsService {
     throw new ForbiddenException(MEMBER_UPDATE_FORBIDDEN);
   }
 
+  async addProjectsRights(
+    team_id: number,
+    project_id: number,
+    project_name: string,
+  ) {
+    const team = await this.teamRepository.findOne({
+      where: { id: team_id },
+      relations: ['members'],
+    });
+
+    if (!team) {
+      throw new NotFoundException(TEAM_NOT_FOUND);
+    }
+
+    team.members = team.members.map((member) => {
+      const isOwner = member.role === MemberRoles.owner;
+
+      return {
+        ...member,
+        projects_rights: [
+          ...(member.projects_rights || []),
+          {
+            project_id,
+            project_name,
+            create: isOwner,
+            read: isOwner,
+            update: isOwner,
+            delete: isOwner,
+          },
+        ],
+      };
+    });
+
+    await this.memberRepository.save(team.members);
+  }
+
   async getJoinLink(team_id: number) {
     const team = await this.teamRepository.findOneBy({ id: team_id });
 
@@ -226,14 +253,13 @@ export class TeamsService {
 
     team.users.push(user);
 
-    const projectIds = team.projects?.map((p) => p.id);
-
     const member = await this.memberRepository.save({
       user,
       team,
       role: MemberRoles.member,
-      projects_rights: projectIds?.map((project_id) => ({
-        project_id,
+      projects_rights: team.projects?.map((project) => ({
+        project_id: project.id,
+        project_name: project.name,
         create: false,
         read: false,
         update: false,

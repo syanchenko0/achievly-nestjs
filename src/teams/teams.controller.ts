@@ -10,7 +10,11 @@ import {
 } from '@nestjs/common';
 import { TeamsService } from '@/teams/teams.service';
 import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
-import { TEAM_NOT_FOUND, WRONG_PARAMS } from '@/app/constants/error.constant';
+import {
+  TEAM_NOT_FOUND,
+  WRONG_BODY,
+  WRONG_PARAMS,
+} from '@/app/constants/error.constant';
 import {
   ApiBody,
   ApiOperation,
@@ -19,10 +23,15 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { CreateTeamBody, UpdateTeamMemberBody } from '@/teams/dto/swagger.dto';
+import {
+  CreateTeamBody,
+  DeleteTeamMembersBody,
+  UpdateTeamMemberBody,
+} from '@/teams/dto/swagger.dto';
 import { TeamDto, TeamGeneralInfoDto } from '@/teams/dto/team.dto';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
 import { TeamIncludeGuard } from '@/teams/guards/teams.guard';
+import { deleteTeamMembersSchema } from '@/teams/schemas/teams.schema';
 
 @ApiTags('Teams')
 @UseGuards(JwtAuthGuard)
@@ -121,33 +130,6 @@ export class TeamsController {
     return this.teamService.getJoinLink(Number(params.team_id));
   }
 
-  @Get('/:team_id/members/:member_id/projects_rights')
-  @ApiOperation({
-    operationId: 'getProjectsRights',
-    summary: 'Get projects rights by member id',
-  })
-  @ApiResponse({ status: 200, type: String })
-  @ApiResponse({ status: 400, type: BadRequest })
-  @ApiParam({ name: 'team_id', type: 'string' })
-  @ApiParam({ name: 'member_id', type: 'string' })
-  async getProjectsRightsByMemberId(@Req() request: ExtendedRequest) {
-    const { params } = request;
-
-    if (
-      !params?.team_id ||
-      Number.isNaN(Number(params.team_id)) ||
-      !params?.member_id ||
-      Number.isNaN(Number(params.member_id))
-    ) {
-      throw new BadRequestException(WRONG_PARAMS);
-    }
-
-    return this.teamService.getProjectsRightsByMemberId(
-      Number(params.team_id),
-      Number(params.member_id),
-    );
-  }
-
   @Patch(':team_id/members/:member_id')
   @ApiOperation({
     operationId: 'updateTeamMember',
@@ -240,6 +222,36 @@ export class TeamsController {
     return this.teamService.deleteTeam(Number(params.team_id), Number(user.id));
   }
 
+  @Delete('/:team_id/members')
+  @ApiOperation({
+    operationId: 'deleteTeamMembers',
+    summary: 'Delete team members',
+  })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiBody({ type: DeleteTeamMembersBody })
+  @ApiParam({ name: 'team_id', type: 'string' })
+  async deleteTeamMembers(
+    @Req()
+    request: Omit<ExtendedRequest, 'body'> & { body: DeleteTeamMembersBody },
+  ) {
+    const { user, params, body } = request;
+
+    if (!params?.team_id || Number.isNaN(Number(params.team_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    const { error } = deleteTeamMembersSchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    for (const id of body.member_ids) {
+      await this.teamService.deleteMember(Number(params.team_id), id, user.id);
+    }
+  }
+
   @Delete('/:team_id/members/:member_id')
   @ApiOperation({
     operationId: 'deleteTeamMember',
@@ -264,7 +276,7 @@ export class TeamsController {
     return this.teamService.deleteMember(
       Number(params.team_id),
       Number(params.member_id),
-      Number(user.id),
+      user.id,
     );
   }
 }

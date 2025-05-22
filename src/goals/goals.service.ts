@@ -6,6 +6,7 @@ import {
   CreateGoalSchema,
   GetGoalsSchema,
   UpdateGoalSchema,
+  UpdateTasksSchema,
 } from '@/goals/schemas/goal.schema';
 import {
   WRONG_BODY,
@@ -16,7 +17,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GoalEntity } from '@/goals/entities/goal.entity';
 import { TaskEntity } from '@/goals/entities/task.entity';
-import { CreateGoalBody, UpdateGoalBody } from '@/goals/dto/swagger.dto';
+import {
+  CreateGoalBody,
+  UpdateGoalBody,
+  UpdateTaskBody,
+} from '@/goals/dto/swagger.dto';
 import {
   GoalCategoryEnum,
   GoalStatusEnum,
@@ -105,6 +110,14 @@ export class GoalsService {
       }));
 
       await this.taskRepository.upsert(tasksTransformed, ['id']);
+
+      const tasksForDelete = goal.tasks.filter(
+        (task) => !data?.tasks?.find((t) => t.id === task.id),
+      );
+
+      if (tasksForDelete.length) {
+        await this.taskRepository.remove(tasksForDelete);
+      }
     }
 
     return await this.goalRepository.update(goal.id, {
@@ -115,6 +128,16 @@ export class GoalsService {
       note: data?.note || goal?.note,
       achieved_date: data?.achieved_date || goal?.achieved_date,
     });
+  }
+
+  async updateTasks(body: UpdateTaskBody[]) {
+    const { error } = UpdateTasksSchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    return await this.taskRepository.save(body);
   }
 
   async deleteGoal(id: number) {

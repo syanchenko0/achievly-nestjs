@@ -19,7 +19,11 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
 import { GoalDto } from '@/goals/dto/goal.dto';
-import { CreateGoalBody, UpdateGoalBody } from '@/goals/dto/swagger.dto';
+import {
+  CreateGoalBody,
+  UpdateGoalBody,
+  UpdateTaskBody,
+} from '@/goals/dto/swagger.dto';
 import { UpdateResult } from 'typeorm';
 
 @ApiTags('Goals')
@@ -64,6 +68,19 @@ export class GoalsController {
     const { params, body } = request;
 
     return await this.goalsService.updateGoal(Number(params.id), body);
+  }
+
+  @Post('/tasks')
+  @ApiOperation({ operationId: 'updateTasks', summary: 'Update tasks' })
+  @ApiResponse({ status: 200, type: UpdateResult })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiBody({ type: UpdateTaskBody, isArray: true })
+  async updateTasks(
+    @Req() request: Omit<ExtendedRequest, 'body'> & { body: UpdateTaskBody[] },
+  ) {
+    const { body } = request;
+
+    return await this.goalsService.updateTasks(body);
   }
 
   @Delete('/:id')

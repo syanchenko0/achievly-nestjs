@@ -12,6 +12,16 @@ const CreateTaskSchema = z.object({
   note: z.string(ZOD_ERROR).optional(),
 });
 
+const UpdateTasksSchema = z.array(
+  z.object({
+    id: z.number(ZOD_ERROR),
+    title: z.string(ZOD_ERROR).optional(),
+    deadline_date: z.string(ZOD_ERROR).optional().nullable().nullish(),
+    note: z.string(ZOD_ERROR).optional().nullable().nullish(),
+    done_date: z.string(ZOD_ERROR).optional().nullable().nullish(),
+  }),
+);
+
 const UpdateTaskSchema = z.object({
   id: z.number(ZOD_ERROR).optional(),
   title: z.string(ZOD_ERROR),
@@ -72,4 +82,9 @@ const UpdateGoalSchema = z.object({
   tasks: z.array(UpdateTaskSchema).optional(),
 });
 
-export { GetGoalsSchema, CreateGoalSchema, UpdateGoalSchema };
+export {
+  GetGoalsSchema,
+  CreateGoalSchema,
+  UpdateGoalSchema,
+  UpdateTasksSchema,
+};

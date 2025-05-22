@@ -18,6 +18,13 @@ class ProjectRightsDto {
   @ApiProperty({ type: Number, required: true, description: 'ID проекта' })
   project_id: number;
 
+  @ApiProperty({
+    type: String,
+    required: true,
+    description: 'Наименование проекта',
+  })
+  project_name: string;
+
   @ApiProperty({ type: Boolean, required: true, description: 'Создание' })
   create: boolean;
 
@@ -50,6 +57,17 @@ class UpdateTeamMemberBody {
   projects_rights?: ProjectRightsDto[];
 }
 
+class DeleteTeamMembersBody {
+  @ApiProperty({
+    type: Number,
+    required: true,
+    nullable: false,
+    isArray: true,
+    description: 'ID участников команды',
+  })
+  member_ids: number[];
+}
+
 class MemberDto {
   @ApiProperty({
     type: Number,
@@ -68,11 +86,35 @@ class MemberDto {
   @ApiProperty({ type: String, required: true, description: 'Роль в команде' })
   role: MemberRoles;
 
-  constructor(member: MemberDto) {
+  @ApiProperty({
+    type: ProjectRightsDto,
+    isArray: true,
+    required: false,
+    description: 'Массив прав в проектах',
+  })
+  projects_rights?: ProjectRightsDto[];
+
+  constructor(
+    member: MemberDto,
+    user_id: number,
+    role: MemberRoles | undefined,
+  ) {
     this.id = member.id;
     this.user = new UserDto(member.user as UserEntity);
     this.role = member.role;
+    this.projects_rights =
+      member.user.id === user_id || role !== MemberRoles.member
+        ? member.projects_rights?.filter(
+            (right) => right.read || role !== MemberRoles.member,
+          )
+        : undefined;
   }
 }
 
-export { CreateTeamBody, UpdateTeamMemberBody, MemberDto, ProjectRightsDto };
+export {
+  CreateTeamBody,
+  UpdateTeamMemberBody,
+  MemberDto,
+  ProjectRightsDto,
+  DeleteTeamMembersBody,
+};

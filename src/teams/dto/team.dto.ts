@@ -1,6 +1,6 @@
 import { TeamEntity } from '@/teams/entities/team.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { MemberDto } from '@/teams/dto/swagger.dto';
+import { MemberDto, ProjectRightsDto } from '@/teams/dto/swagger.dto';
 
 class TeamDto {
   @ApiProperty({
@@ -25,6 +25,14 @@ class TeamDto {
   user_role: string;
 
   @ApiProperty({
+    type: ProjectRightsDto,
+    required: false,
+    isArray: true,
+    description: 'Массив прав в проектах',
+  })
+  user_projects_rights?: ProjectRightsDto[];
+
+  @ApiProperty({
     type: MemberDto,
     required: true,
     isArray: true,
@@ -33,11 +41,18 @@ class TeamDto {
   members: MemberDto[];
 
   constructor(team: TeamEntity, user_id: number) {
+    const member = team.members.find((member) => member.user.id === user_id);
+    const role = member?.role;
+
     this.id = team.id;
     this.name = team.name;
-    this.user_role = team.members.find((member) => member.user.id === user_id)
-      ?.role as string;
-    this.members = team.members?.map((member) => new MemberDto(member));
+    this.user_role = role as string;
+    this.user_projects_rights = member?.projects_rights?.filter(
+      (right) => right.read,
+    ) as ProjectRightsDto[];
+    this.members = team.members?.map(
+      (member) => new MemberDto(member, user_id, role),
+    );
   }
 }
 

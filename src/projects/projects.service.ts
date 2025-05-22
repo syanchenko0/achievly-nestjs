@@ -61,6 +61,34 @@ export class ProjectsService {
       user,
     });
 
-    return new ProjectDto(project);
+    await this.teamsService.addProjectsRights(
+      team.id,
+      project.id,
+      project.name,
+    );
+
+    return new ProjectDto(project, user_id);
+  }
+
+  async getProjects(team_id: number, user_id: number) {
+    const projects = await this.projectRepository.find({
+      where: { team: { id: team_id } },
+      relations: ['team', 'user', 'team.members'],
+    });
+
+    return projects
+      .filter((project) => {
+        const member = project.team.members.find(
+          (member) => member.user.id === user_id,
+        );
+
+        const right = member?.projects_rights?.find(
+          (right) => right.project_id === project.id,
+        );
+
+        return right?.read;
+      })
+      .sort((a, b) => a.id - b.id)
+      .map((project) => new ProjectDto(project, user_id));
   }
 }

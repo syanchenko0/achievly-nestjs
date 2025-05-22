@@ -20,4 +20,8 @@ const updateTeamMemberSchema = z.object({
     .optional(),
 });
 
-export { createTeamSchema, updateTeamMemberSchema };
+const deleteTeamMembersSchema = z.object({
+  member_ids: z.array(z.number(ZOD_ERROR)),
+});
+
+export { createTeamSchema, updateTeamMemberSchema, deleteTeamMembersSchema };

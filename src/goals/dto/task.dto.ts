@@ -19,6 +19,8 @@ class TaskDto {
   @ApiProperty({
     description: 'Дата окончания задачи',
     type: String,
+    required: false,
+    nullable: true,
     example: '2025-02-02T21:00:00.000Z',
   })
   deadline_date?: string;
@@ -26,6 +28,8 @@ class TaskDto {
   @ApiProperty({
     description: 'Примечание задачи',
     type: String,
+    required: false,
+    nullable: true,
     example: 'Note',
   })
   note?: string;
@@ -33,6 +37,8 @@ class TaskDto {
   @ApiProperty({
     description: 'Дата выполнения задачи',
     type: String,
+    required: false,
+    nullable: true,
     example: '2025-02-02T21:00:00.000Z',
   })
   done_date?: string;
