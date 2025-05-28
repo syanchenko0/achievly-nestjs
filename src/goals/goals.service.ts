@@ -44,30 +44,30 @@ export class GoalsService {
   ) {}
 
   async createGoal({ id: userId }: RequestUser, body: CreateGoalBody) {
-    const { data, error } = CreateGoalSchema.safeParse(body);
+    const { error } = CreateGoalSchema.safeParse(body);
 
-    if (error || !data) throw new BadRequestException(WRONG_BODY);
+    if (error) throw new BadRequestException(WRONG_BODY);
 
     const user = await this.usersService.getUserById(userId);
 
     if (!user) throw new BadRequestException(WRONG_TOKEN);
 
     const goal = await this.goalRepository.save({
-      title: data.title,
-      category: data.category as GoalCategoryEnum,
+      title: body.title,
+      category: body.category,
       status: GoalStatusEnum.Ongoing,
-      deadline_date: data?.deadline_date,
-      note: data?.note,
+      deadline_date: body?.deadline_date,
+      note: body?.note,
       user,
     });
 
-    if (data?.tasks) {
+    if (body?.tasks) {
       const biggestListOrder = (await this.taskRepository
         .createQueryBuilder('task')
         .select('MAX(task.list_order)')
         .getRawOne()) as { max: number | null };
 
-      const transformedTasks = data.tasks.map((task, index) => ({
+      const transformedTasks = body.tasks.map((task, index) => ({
         ...task,
         list_order:
           biggestListOrder.max !== null
@@ -125,16 +125,13 @@ export class GoalsService {
     if (!goal) throw new BadRequestException(WRONG_PARAMS);
 
     if (body?.tasks?.length) {
-      const tasksTransformed = body.tasks.map((task) => ({
-        id: task?.id ?? -1,
-        title: task.title,
-        deadline_date: task?.deadline_date,
-        note: task?.note,
-        done_date: task?.done_date,
+      const tasksTransformed = body.tasks.map((task, index) => ({
+        ...task,
+        goal_list_order: index,
         goal,
       }));
 
-      await this.taskRepository.upsert(tasksTransformed, ['id']);
+      await this.taskRepository.save(tasksTransformed);
 
       const tasksForDelete = goal.tasks?.filter(
         (task) => !body?.tasks?.find((t) => t.id === task.id),
