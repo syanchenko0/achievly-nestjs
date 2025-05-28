@@ -25,6 +25,12 @@ class TaskEntity {
   @Column({ nullable: true })
   done_date?: string;
 
+  @Column({ nullable: true })
+  list_order?: number;
+
+  @Column({ nullable: true })
+  goal_list_order?: number;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 

@@ -5,10 +5,13 @@ import { RequestUser } from '@/app/types/common.type';
 import {
   CreateGoalSchema,
   GetGoalsSchema,
+  UpdateGoalListOrderBodySchema,
   UpdateGoalSchema,
-  UpdateTasksSchema,
+  UpdateTaskListOrderBodySchema,
+  UpdateTaskSchema,
 } from '@/goals/schemas/goal.schema';
 import {
+  GOAL_NOT_FOUND,
   WRONG_BODY,
   WRONG_PARAMS,
   WRONG_TOKEN,
@@ -20,12 +23,15 @@ import { TaskEntity } from '@/goals/entities/task.entity';
 import {
   CreateGoalBody,
   UpdateGoalBody,
+  UpdateGoalListOrderBody,
   UpdateTaskBody,
+  UpdateTaskListOrderBody,
 } from '@/goals/dto/swagger.dto';
 import {
   GoalCategoryEnum,
   GoalStatusEnum,
 } from '@/goals/constants/goal.constant';
+import { TaskDto } from '@/goals/dto/task.dto';
 
 @Injectable()
 export class GoalsService {
@@ -56,11 +62,27 @@ export class GoalsService {
     });
 
     if (data?.tasks) {
-      for (const task of data.tasks) {
+      const biggestListOrder = (await this.taskRepository
+        .createQueryBuilder('task')
+        .select('MAX(task.list_order)')
+        .getRawOne()) as { max: number | null };
+
+      const transformedTasks = data.tasks.map((task, index) => ({
+        ...task,
+        list_order:
+          biggestListOrder.max !== null
+            ? biggestListOrder.max + (index || 1)
+            : index,
+        goal_list_order: index,
+      }));
+
+      for (const task of transformedTasks) {
         await this.taskRepository.save({
           title: task.title,
           deadline_date: task?.deadline_date,
           note: task?.note,
+          list_order: task?.list_order,
+          goal_list_order: task?.goal_list_order,
           goal,
         });
       }
@@ -89,19 +111,22 @@ export class GoalsService {
   }
 
   async updateGoal(id: number, body: UpdateGoalBody) {
-    const { data, error } = UpdateGoalSchema.safeParse(body);
+    const { error } = UpdateGoalSchema.safeParse(body);
 
     if (error) throw new BadRequestException(WRONG_BODY);
 
-    const goal = await this.goalRepository.findOneBy({
-      id: Number(id),
+    const goal = await this.goalRepository.findOne({
+      where: {
+        id: Number(id),
+      },
+      relations: ['tasks'],
     });
 
     if (!goal) throw new BadRequestException(WRONG_PARAMS);
 
-    if (data?.tasks?.length) {
-      const tasksTransformed = data.tasks.map((task) => ({
-        id: task?.id || -1,
+    if (body?.tasks?.length) {
+      const tasksTransformed = body.tasks.map((task) => ({
+        id: task?.id ?? -1,
         title: task.title,
         deadline_date: task?.deadline_date,
         note: task?.note,
@@ -111,8 +136,8 @@ export class GoalsService {
 
       await this.taskRepository.upsert(tasksTransformed, ['id']);
 
-      const tasksForDelete = goal.tasks.filter(
-        (task) => !data?.tasks?.find((t) => t.id === task.id),
+      const tasksForDelete = goal.tasks?.filter(
+        (task) => !body?.tasks?.find((t) => t.id === task.id),
       );
 
       if (tasksForDelete.length) {
@@ -121,26 +146,90 @@ export class GoalsService {
     }
 
     return await this.goalRepository.update(goal.id, {
-      title: data?.title || goal?.title,
-      category: (data?.category as GoalCategoryEnum) || goal.category,
-      status: (data?.status as GoalStatusEnum) || goal.status,
-      deadline_date: data?.deadline_date || goal?.deadline_date,
-      note: data?.note || goal?.note,
-      achieved_date: data?.achieved_date || goal?.achieved_date,
+      title: body?.title || goal?.title,
+      category: (body?.category as GoalCategoryEnum) || goal.category,
+      status: (body?.status as GoalStatusEnum) || goal.status,
+      deadline_date: body?.deadline_date,
+      note: body?.note,
+      achieved_date: body?.achieved_date || goal.achieved_date,
     });
   }
 
-  async updateTasks(body: UpdateTaskBody[]) {
-    const { error } = UpdateTasksSchema.safeParse(body);
+  async updateGoalListOrder(body: UpdateGoalListOrderBody[]) {
+    const { error } = UpdateGoalListOrderBodySchema.safeParse(body);
 
     if (error) {
       throw new BadRequestException(WRONG_BODY);
     }
 
-    return await this.taskRepository.save(body);
+    for (const goal of body) {
+      await this.goalRepository.update(goal.id, {
+        list_order: goal.list_order,
+      });
+    }
   }
 
   async deleteGoal(id: number) {
+    const goal = await this.goalRepository.findOne({ where: { id } });
+
+    if (!goal) {
+      throw new BadRequestException(GOAL_NOT_FOUND);
+    }
+
+    await this.taskRepository.delete({ goal: { id } });
+
     return await this.goalRepository.delete({ id });
+  }
+
+  async getTasks(user: RequestUser) {
+    const tasks = await this.taskRepository.find({
+      where: { goal: { user: { id: user.id } } },
+      relations: ['goal'],
+    });
+
+    return tasks
+      .sort((a, b) => (a.list_order ?? 0) - (b.list_order ?? 0))
+      .map((task) => new TaskDto(task));
+  }
+
+  async updateTask(body: UpdateTaskBody) {
+    const { error } = UpdateTaskSchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    const task = await this.taskRepository.findOneBy({
+      id: Number(body.id),
+    });
+
+    if (!task) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return await this.taskRepository.update(body.id, {
+      title: body?.title || task?.title,
+      deadline_date: body?.deadline_date,
+      note: body?.note,
+      done_date: body?.done_date,
+    });
+  }
+
+  async updateTaskListOrder(body: UpdateTaskListOrderBody[]) {
+    const { error } = UpdateTaskListOrderBodySchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    for (const task of body) {
+      await this.taskRepository.update(task.id, {
+        list_order: task.list_order,
+      });
+    }
+  }
+
+  async deleteTask(id: number) {
+    return await this.taskRepository.delete({ id });
   }
 }

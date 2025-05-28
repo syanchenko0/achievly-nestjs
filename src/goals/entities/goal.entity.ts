@@ -40,6 +40,9 @@ class GoalEntity {
   note?: string;
 
   @Column({ nullable: true })
+  list_order?: number;
+
+  @Column({ nullable: true })
   achieved_date?: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -55,7 +58,10 @@ class GoalEntity {
   @ManyToOne(() => UserEntity, (user) => user.goals)
   user: UserEntity;
 
-  @OneToMany(() => TaskEntity, (task) => task.goal)
+  @OneToMany(() => TaskEntity, (task) => task.goal, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   tasks: TaskEntity[];
 }
 

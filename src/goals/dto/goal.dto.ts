@@ -83,7 +83,10 @@ class GoalDto {
     this.deadline_date = goal.deadline_date;
     this.note = goal.note;
     this.achieved_date = goal.achieved_date;
-    this.tasks = goal.tasks?.map((task) => new TaskDto(task)) || null;
+    this.tasks =
+      goal.tasks
+        ?.sort((a, b) => (a.list_order ?? 0) - (b.list_order ?? 0))
+        ?.map((task) => new TaskDto(task)) || null;
   }
 }
 

@@ -12,23 +12,27 @@ const CreateTaskSchema = z.object({
   note: z.string(ZOD_ERROR).optional(),
 });
 
-const UpdateTasksSchema = z.array(
+const UpdateTaskSchema = z.object({
+  id: z.number(ZOD_ERROR),
+  title: z.string(ZOD_ERROR).optional(),
+  deadline_date: z.string(ZOD_ERROR).optional().nullable().nullish(),
+  note: z.string(ZOD_ERROR).optional().nullable().nullish(),
+  done_date: z.string(ZOD_ERROR).optional().nullable().nullish(),
+});
+
+const UpdateTaskListOrderBodySchema = z.array(
   z.object({
     id: z.number(ZOD_ERROR),
-    title: z.string(ZOD_ERROR).optional(),
-    deadline_date: z.string(ZOD_ERROR).optional().nullable().nullish(),
-    note: z.string(ZOD_ERROR).optional().nullable().nullish(),
-    done_date: z.string(ZOD_ERROR).optional().nullable().nullish(),
+    list_order: z.number(ZOD_ERROR),
   }),
 );
 
-const UpdateTaskSchema = z.object({
-  id: z.number(ZOD_ERROR).optional(),
-  title: z.string(ZOD_ERROR),
-  deadline_date: z.string(ZOD_ERROR).optional(),
-  note: z.string(ZOD_ERROR).optional(),
-  done_date: z.string(ZOD_ERROR).optional(),
-});
+const UpdateGoalListOrderBodySchema = z.array(
+  z.object({
+    id: z.number(ZOD_ERROR),
+    list_order: z.number(ZOD_ERROR),
+  }),
+);
 
 const CreateGoalSchema = z.object({
   title: z.string(ZOD_ERROR),
@@ -76,15 +80,17 @@ const UpdateGoalSchema = z.object({
     ])
     .optional(),
   status: z.enum(['ongoing', 'achieved']).optional(),
-  deadline_date: z.string(ZOD_ERROR).optional(),
-  note: z.string(ZOD_ERROR).optional(),
-  achieved_date: z.string(ZOD_ERROR).optional(),
-  tasks: z.array(UpdateTaskSchema).optional(),
+  deadline_date: z.string(ZOD_ERROR).optional().nullable().nullish(),
+  note: z.string(ZOD_ERROR).optional().nullable().nullish(),
+  achieved_date: z.string(ZOD_ERROR).optional().nullable().nullish(),
+  tasks: z.array(UpdateTaskSchema).optional().nullable().nullish(),
 });
 
 export {
   GetGoalsSchema,
   CreateGoalSchema,
   UpdateGoalSchema,
-  UpdateTasksSchema,
+  UpdateTaskSchema,
+  UpdateTaskListOrderBodySchema,
+  UpdateGoalListOrderBodySchema,
 };
