@@ -42,7 +42,7 @@ export class GoalsController {
   @ApiOperation({ operationId: 'getGoals', summary: 'Get goals' })
   @ApiResponse({ status: 200, type: GoalDto, isArray: true })
   @ApiResponse({ status: 400, type: BadRequest })
-  @ApiQuery({ type: String, name: 'status', required: false })
+  @ApiQuery({ type: String, name: 'status', required: false, nullable: true })
   async getGoals(@Req() request: ExtendedRequest) {
     const { user, query } = request;
 
@@ -53,10 +53,11 @@ export class GoalsController {
   @ApiOperation({ operationId: 'getTasks', summary: 'Get tasks' })
   @ApiResponse({ status: 200, type: TaskDto, isArray: true })
   @ApiResponse({ status: 400, type: BadRequest })
+  @ApiQuery({ type: String, name: 'status', required: false, nullable: true })
   async getTasks(@Req() request: ExtendedRequest) {
-    const { user } = request;
+    const { user, query } = request;
 
-    return this.goalsService.getTasks(user);
+    return this.goalsService.getTasks(user, query);
   }
 
   @Post('/')

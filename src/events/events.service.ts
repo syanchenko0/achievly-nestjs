@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { EventEntity } from '@/events/entities/event.entity';
 import {
   CreateEventSchema,
+  CreateEventsSchema,
   UpdateEventSchema,
 } from '@/events/schemas/event.schema';
 import { EventDto } from '@/events/dto/event.dto';
@@ -20,29 +21,58 @@ export class EventsService {
     private readonly eventRepository: Repository<EventEntity>,
   ) {}
 
-  async createEvent({ id: userId }: RequestUser, body: CreateEventBody) {
-    const { data, error } = CreateEventSchema.safeParse(body);
+  async createEvent(user_id: number, body: CreateEventBody) {
+    const { error } = CreateEventSchema.safeParse(body);
 
-    if (error || !data) throw new BadRequestException(WRONG_BODY);
+    if (error) throw new BadRequestException(WRONG_BODY);
 
-    const user = await this.usersService.getUserById(userId);
+    const user = await this.usersService.getUserById(user_id);
 
     if (!user) throw new BadRequestException(WRONG_TOKEN);
 
     const event = await this.eventRepository.save({
-      title: data.title,
-      start_timestamp: data.start_timestamp,
-      end_timestamp: data.end_timestamp,
+      title: body.title,
+      start_timestamp: body.start_timestamp,
+      end_timestamp: body.end_timestamp,
       user,
     });
 
     return new EventDto(event);
   }
 
-  async getEvents(user: RequestUser) {
+  async createEvents(user_id: number, body: CreateEventBody[]) {
+    const { error } = CreateEventsSchema.safeParse(body);
+
+    if (error) throw new BadRequestException(WRONG_BODY);
+
+    const events: EventDto[] = [];
+
+    for (const event of body) {
+      const result = await this.createEvent(user_id, event);
+      events.push(result);
+    }
+
+    return events;
+  }
+
+  async getEvents(
+    user: RequestUser,
+    start_period?: string,
+    end_period?: string,
+  ) {
     const events = await this.eventRepository.find({
       where: { user: { id: user.id } },
     });
+
+    if (start_period && end_period) {
+      return events
+        .filter(
+          (event) =>
+            new Date(Number(event.start_timestamp)) >= new Date(start_period) &&
+            new Date(Number(event.start_timestamp)) <= new Date(end_period),
+        )
+        .map((event) => new EventDto(event));
+    }
 
     return events.map((event) => new EventDto(event));
   }

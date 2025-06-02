@@ -22,7 +22,6 @@ class EventDto {
     description: 'Время начала события',
     type: Number,
     required: true,
-    example: 'Note',
   })
   start_timestamp: number;
 
@@ -30,15 +29,14 @@ class EventDto {
     description: 'Время окончания события',
     type: Number,
     required: true,
-    example: 'Note',
   })
   end_timestamp: number;
 
   constructor(event: EventEntity) {
     this.id = event.id;
     this.title = event.title;
-    this.start_timestamp = event.start_timestamp.getTime();
-    this.end_timestamp = event.end_timestamp.getTime();
+    this.start_timestamp = Number(event.start_timestamp);
+    this.end_timestamp = Number(event.end_timestamp);
   }
 }
 

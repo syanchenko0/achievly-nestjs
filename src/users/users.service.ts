@@ -32,7 +32,10 @@ export class UsersService {
     return await this.userRepository.findOneBy({ id });
   }
 
-  async getUserByInviteId(invite_id: string): Promise<UserEntity | null> {
-    return await this.userRepository.findOneBy({ invite_id });
+  async getUserProfile(id: number): Promise<UserEntity | null> {
+    return await this.userRepository.findOne({
+      where: { id },
+      relations: ['events', 'goals', 'projects', 'teams'],
+    });
   }
 }

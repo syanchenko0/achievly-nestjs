@@ -46,6 +46,13 @@ const PROJECT_CREATE_FORBIDDEN = 'Создание проекта недосту
 
 const PROJECT_NOT_FOUND = 'Проект не найден';
 
+const PROJECT_TASK_NOT_FOUND = 'Задача проекта не найдена';
+
+const PROJECT_FORBIDDEN = 'Проект недоступен для пользователя';
+
+const PROJECT_UPDATE_FORBIDDEN =
+  'Редактирование проекта недоступно для пользователя';
+
 export {
   WRONG_BODY,
   WRONG_PARAMS,
@@ -67,4 +74,7 @@ export {
   MEMBER_DELETE_FORBIDDEN,
   PROJECT_CREATE_FORBIDDEN,
   PROJECT_NOT_FOUND,
+  PROJECT_TASK_NOT_FOUND,
+  PROJECT_FORBIDDEN,
+  PROJECT_UPDATE_FORBIDDEN,
 };

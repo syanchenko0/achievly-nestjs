@@ -5,6 +5,7 @@ class CreateEventBody {
     description: 'Заголовок события',
     type: String,
     required: true,
+    nullable: false,
     example: 'Title event',
   })
   title: string;
@@ -13,6 +14,7 @@ class CreateEventBody {
     description: 'Время начала события',
     type: Number,
     required: true,
+    nullable: false,
     example: 'Note',
   })
   start_timestamp: number;
@@ -21,9 +23,20 @@ class CreateEventBody {
     description: 'Время окончания события',
     type: Number,
     required: true,
+    nullable: false,
     example: 'Note',
   })
   end_timestamp: number;
+}
+
+class CreateEventsBody {
+  @ApiProperty({
+    description: 'Список событий',
+    type: CreateEventBody,
+    isArray: true,
+    required: true,
+  })
+  events: CreateEventBody[];
 }
 
 class UpdateEventBody {
@@ -31,6 +44,7 @@ class UpdateEventBody {
     description: 'Заголовок события',
     type: String,
     required: true,
+    nullable: false,
     example: 'Title event',
   })
   title: string;
@@ -39,6 +53,7 @@ class UpdateEventBody {
     description: 'Время начала события',
     type: Number,
     required: true,
+    nullable: false,
     example: 'Note',
   })
   start_timestamp: number;
@@ -47,9 +62,10 @@ class UpdateEventBody {
     description: 'Время окончания события',
     type: Number,
     required: true,
+    nullable: false,
     example: 'Note',
   })
   end_timestamp: number;
 }
 
-export { CreateEventBody, UpdateEventBody };
+export { CreateEventBody, CreateEventsBody, UpdateEventBody };

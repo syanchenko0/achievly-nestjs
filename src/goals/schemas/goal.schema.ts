@@ -1,9 +1,16 @@
-import { GoalStatusEnum } from '@/goals/constants/goal.constant';
+import {
+  GoalStatusEnum,
+  TaskStatusEnum,
+} from '@/goals/constants/goal.constant';
 import { z } from 'zod';
 import { ZOD_ERROR } from '@/app/constants/error.constant';
 
 const GetGoalsSchema = z.object({
   status: z.enum([GoalStatusEnum.Ongoing, GoalStatusEnum.Achieved]).optional(),
+});
+
+const GetTasksSchema = z.object({
+  status: z.enum([TaskStatusEnum.Active, TaskStatusEnum.Done]).optional(),
 });
 
 const CreateTaskSchema = z.object({
@@ -100,6 +107,7 @@ const UpdateGoalSchema = z.object({
 
 export {
   GetGoalsSchema,
+  GetTasksSchema,
   CreateGoalSchema,
   UpdateGoalSchema,
   UpdateTaskSchema,

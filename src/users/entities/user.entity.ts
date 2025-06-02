@@ -8,16 +8,13 @@ import {
 import { GoalEntity } from '@/goals/entities/goal.entity';
 import { EventEntity } from '@/events/entities/event.entity';
 import { NotificationEntity } from '@/notifications/entities/notification.entity';
-import { ProjectEntity } from '@/projects/entities/project.entity';
+import { ProjectEntity } from '@/projects/entities/projects.entity';
 import { TeamEntity } from '@/teams/entities/team.entity';
 
 @Entity()
 class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column({ generated: 'uuid' })
-  invite_id: string;
 
   @Column()
   username: string;

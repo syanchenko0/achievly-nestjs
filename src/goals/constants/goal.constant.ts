@@ -3,6 +3,11 @@ enum GoalStatusEnum {
   Achieved = 'achieved',
 }
 
+enum TaskStatusEnum {
+  Active = 'active',
+  Done = 'done',
+}
+
 enum GoalCategoryEnum {
   Education = 'education',
   Career = 'career',
@@ -21,4 +26,4 @@ enum GoalCategoryEnum {
   SocialActivity = 'socialActivity',
 }
 
-export { GoalStatusEnum, GoalCategoryEnum };
+export { GoalStatusEnum, TaskStatusEnum, GoalCategoryEnum };

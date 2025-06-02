@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { UserEntity } from '@/users/entities/user.entity';
 import { MemberEntity } from '@/teams/entities/member.entity';
-import { ProjectEntity } from '@/projects/entities/project.entity';
+import { ProjectEntity } from '@/projects/entities/projects.entity';
 
 @Entity()
 class TeamEntity {

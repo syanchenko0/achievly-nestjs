@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeEndpoint, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -7,6 +7,7 @@ import { Response } from 'express';
 import { AuthService } from '@/auth/auth.service';
 import { ISocialProfile } from '@/auth/types/auth.type';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
+import { ExtendedRequest } from '@/app/types/common.type';
 
 @Controller('auth')
 export class AuthController {
@@ -21,6 +22,28 @@ export class AuthController {
   @ApiResponse({ status: 401 })
   @ApiOperation({ summary: 'Проверка авторизации', operationId: 'checkAuth' })
   async checkAuth() {}
+
+  @Post('/logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400 })
+  @ApiOperation({ summary: 'logout', operationId: 'logout' })
+  logout(
+    @Req() request: ExtendedRequest,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    response.cookie('accessToken', '', {
+      expires: new Date(0),
+      httpOnly: true,
+    });
+
+    response.cookie('refreshToken', '', {
+      expires: new Date(0),
+      httpOnly: true,
+    });
+
+    return;
+  }
 
   @ApiExcludeEndpoint()
   @Get('/google')

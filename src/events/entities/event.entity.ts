@@ -16,11 +16,11 @@ class EventEntity {
   @Column()
   title: string;
 
-  @Column({ nullable: false, type: 'timestamp' })
-  start_timestamp: Date;
+  @Column({ nullable: false, type: 'bigint' })
+  start_timestamp: number;
 
-  @Column({ nullable: false, type: 'timestamp' })
-  end_timestamp: Date;
+  @Column({ nullable: false, type: 'bigint' })
+  end_timestamp: number;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;

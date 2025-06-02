@@ -4,7 +4,10 @@ import { ProjectsService } from './projects.service';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProjectEntity } from '@/projects/entities/project.entity';
+import {
+  ProjectEntity,
+  ProjectTaskEntity,
+} from '@/projects/entities/projects.entity';
 import { UsersModule } from '@/users/users.module';
 import { TeamsModule } from '@/teams/teams.module';
 
@@ -14,7 +17,7 @@ import { TeamsModule } from '@/teams/teams.module';
     JwtModule,
     UsersModule,
     TeamsModule,
-    TypeOrmModule.forFeature([ProjectEntity]),
+    TypeOrmModule.forFeature([ProjectEntity, ProjectTaskEntity]),
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService],

@@ -5,6 +5,7 @@ import { RequestUser } from '@/app/types/common.type';
 import {
   CreateGoalSchema,
   GetGoalsSchema,
+  GetTasksSchema,
   UpdateGoalListOrderBodySchema,
   UpdateGoalSchema,
   UpdateTaskListOrderBodySchema,
@@ -30,6 +31,7 @@ import {
 import {
   GoalCategoryEnum,
   GoalStatusEnum,
+  TaskStatusEnum,
 } from '@/goals/constants/goal.constant';
 import { TaskDto } from '@/goals/dto/task.dto';
 
@@ -52,27 +54,34 @@ export class GoalsService {
 
     if (!user) throw new BadRequestException(WRONG_TOKEN);
 
+    const biggestListOrderGoal = await this.goalRepository
+      .createQueryBuilder('goal')
+      .where('goal.achieved_date IS NULL')
+      .orderBy('goal.list_order', 'DESC')
+      .limit(1)
+      .getOne();
+
     const goal = await this.goalRepository.save({
       title: body.title,
       category: body.category,
       status: GoalStatusEnum.Ongoing,
       deadline_date: body?.deadline_date,
+      list_order: (biggestListOrderGoal?.list_order ?? -1) + 1,
       note: body?.note,
       user,
     });
 
     if (body?.tasks) {
-      const biggestListOrder = (await this.taskRepository
+      const biggestListOrderTask = await this.taskRepository
         .createQueryBuilder('task')
-        .select('MAX(task.list_order)')
-        .getRawOne()) as { max: number | null };
+        .where('task.done_date IS NULL')
+        .orderBy('task.list_order', 'DESC')
+        .limit(1)
+        .getOne();
 
       const transformedTasks = body.tasks.map((task, index) => ({
         ...task,
-        list_order:
-          biggestListOrder.max !== null
-            ? biggestListOrder.max + (index || 1)
-            : index,
+        list_order: (biggestListOrderTask?.list_order ?? -1) + (index + 1),
         goal_list_order: index,
       }));
 
@@ -104,10 +113,13 @@ export class GoalsService {
     if (data?.status) {
       return (goals || [])
         .filter((goal) => goal.status === data.status)
+        .sort((a, b) => (a.list_order ?? 0) - (b.list_order ?? 0))
         .map((goal) => new GoalDto(goal));
     }
 
-    return (goals || []).map((goal) => new GoalDto(goal));
+    return (goals || [])
+      .sort((a, b) => (a.list_order ?? 0) - (b.list_order ?? 0))
+      .map((goal) => new GoalDto(goal));
   }
 
   async updateGoal(id: number, body: UpdateGoalBody) {
@@ -125,11 +137,32 @@ export class GoalsService {
     if (!goal) throw new BadRequestException(WRONG_PARAMS);
 
     if (body?.tasks?.length) {
-      const tasksTransformed = body.tasks.map((task, index) => ({
-        ...task,
-        goal_list_order: index,
-        goal,
-      }));
+      const biggestListOrderTask = await this.taskRepository
+        .createQueryBuilder('task')
+        .where('task.done_date IS NULL')
+        .orderBy('task.list_order', 'DESC')
+        .limit(1)
+        .getOne();
+
+      let newTaskIndex = 0;
+
+      const tasksTransformed = body.tasks.map((task, index) => {
+        if (task?.id === undefined) {
+          newTaskIndex++;
+          return {
+            ...task,
+            goal_list_order: index,
+            list_order: (biggestListOrderTask?.list_order ?? -1) + newTaskIndex,
+            goal,
+          };
+        }
+
+        return {
+          ...task,
+          goal_list_order: index,
+          goal,
+        };
+      });
 
       await this.taskRepository.save(tasksTransformed);
 
@@ -142,13 +175,17 @@ export class GoalsService {
       }
     }
 
+    if (!body?.tasks?.length && goal?.tasks?.length) {
+      await this.taskRepository.remove(goal.tasks);
+    }
+
     return await this.goalRepository.update(goal.id, {
       title: body?.title || goal?.title,
       category: (body?.category as GoalCategoryEnum) || goal.category,
       status: (body?.status as GoalStatusEnum) || goal.status,
       deadline_date: body?.deadline_date,
       note: body?.note,
-      achieved_date: body?.achieved_date || goal.achieved_date,
+      achieved_date: body?.achieved_date,
     });
   }
 
@@ -178,11 +215,26 @@ export class GoalsService {
     return await this.goalRepository.delete({ id });
   }
 
-  async getTasks(user: RequestUser) {
+  async getTasks(user: RequestUser, query?: Record<string, unknown>) {
+    const { error } = GetTasksSchema.safeParse(query);
+
+    if (error) throw new BadRequestException(WRONG_PARAMS);
+
     const tasks = await this.taskRepository.find({
       where: { goal: { user: { id: user.id } } },
       relations: ['goal'],
     });
+
+    if (query?.status) {
+      return tasks
+        .filter((task) =>
+          query?.status === TaskStatusEnum.Done
+            ? task.done_date
+            : !task.done_date,
+        )
+        .sort((a, b) => (a.list_order ?? 0) - (b.list_order ?? 0))
+        .map((task) => new TaskDto(task));
+    }
 
     return tasks
       .sort((a, b) => (a.list_order ?? 0) - (b.list_order ?? 0))
@@ -204,8 +256,9 @@ export class GoalsService {
       throw new BadRequestException(WRONG_PARAMS);
     }
 
-    return await this.taskRepository.update(body.id, {
-      title: body?.title || task?.title,
+    return await this.taskRepository.save({
+      ...task,
+      title: body?.title,
       deadline_date: body?.deadline_date,
       note: body?.note,
       done_date: body?.done_date,

@@ -7,10 +7,12 @@ const CreateEventSchema = z.object({
   end_timestamp: z.number(ZOD_ERROR),
 });
 
+const CreateEventsSchema = z.array(CreateEventSchema);
+
 const UpdateEventSchema = z.object({
   title: z.string(ZOD_ERROR).optional(),
   start_timestamp: z.number(ZOD_ERROR).optional(),
   end_timestamp: z.number(ZOD_ERROR).optional(),
 });
 
-export { CreateEventSchema, UpdateEventSchema };
+export { CreateEventSchema, CreateEventsSchema, UpdateEventSchema };

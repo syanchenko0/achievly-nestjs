@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -11,15 +12,17 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
-import { CreateEventBody, UpdateEventBody } from '@/events/dto/swagger.dto';
+import { CreateEventsBody, UpdateEventBody } from '@/events/dto/swagger.dto';
 import { EventDto } from '@/events/dto/event.dto';
 import { EventsService } from '@/events/events.service';
 import { UpdateResult } from 'typeorm';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
+import { WRONG_PARAMS } from '@/app/constants/error.constant';
 
 @ApiTags('Events')
 @UseGuards(JwtAuthGuard)
@@ -28,26 +31,32 @@ export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Post('/')
-  @ApiOperation({ operationId: 'createEvent', summary: 'Create event' })
-  @ApiResponse({ status: 200, type: EventDto })
+  @ApiOperation({ operationId: 'createEvents', summary: 'Create events' })
+  @ApiResponse({ status: 200, type: EventDto, isArray: true })
   @ApiResponse({ status: 400, type: BadRequest })
-  @ApiBody({ type: CreateEventBody })
-  async createEvent(
-    @Req() request: Omit<ExtendedRequest, 'body'> & { body: CreateEventBody },
+  @ApiBody({ type: CreateEventsBody })
+  async createEvents(
+    @Req() request: Omit<ExtendedRequest, 'body'> & { body: CreateEventsBody },
   ) {
     const { user, body } = request;
 
-    await this.eventsService.createEvent(user, body);
+    return this.eventsService.createEvents(user.id, body?.events);
   }
 
   @Get('/')
   @ApiOperation({ operationId: 'getEvents', summary: 'Get events' })
   @ApiResponse({ status: 200, type: EventDto, isArray: true })
   @ApiResponse({ status: 400, type: BadRequest })
+  @ApiQuery({ name: 'start_period', type: String, required: true })
+  @ApiQuery({ name: 'end_period', type: String, required: true })
   async getEvents(@Req() request: ExtendedRequest) {
-    const { user } = request;
+    const { user, query } = request;
 
-    await this.eventsService.getEvents(user);
+    return this.eventsService.getEvents(
+      user,
+      query?.start_period as string,
+      query?.end_period as string,
+    );
   }
 
   @Patch('/:id')
@@ -61,16 +70,21 @@ export class EventsController {
   ) {
     const { params, body } = request;
 
-    await this.eventsService.updateEvent(Number(params.id), body);
+    return this.eventsService.updateEvent(Number(params.id), body);
   }
 
-  @Delete('/:id')
+  @Delete('/:event_id')
   @ApiOperation({ operationId: 'deleteEvent', summary: 'Delete event' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'event_id', type: String, required: true })
   async deleteEvent(@Req() request: ExtendedRequest) {
     const { params } = request;
 
-    await this.eventsService.deleteEvent(Number(params.id));
+    if (params?.event_id && Number.isNaN(Number(params.event_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.eventsService.deleteEvent(Number(params.event_id));
   }
 }
