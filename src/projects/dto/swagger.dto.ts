@@ -31,7 +31,57 @@ class ProjectColumn {
     nullable: true,
     description: 'Признак удаления столбца',
   })
-  removable?: boolean | null;
+  is_removable?: boolean | null;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    nullable: true,
+    description: 'Признак разрешения создания задач в столбце',
+  })
+  is_task_creation_allowed?: boolean;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    nullable: true,
+    description: 'Признак столбца финального этапа',
+  })
+  is_final_stage?: boolean | null;
+}
+
+class CreateProjectColumnBody {
+  @ApiProperty({
+    type: String,
+    required: true,
+    nullable: false,
+    description: 'Название столбца',
+  })
+  name: string;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    nullable: true,
+    description: 'Признак удаления столбца',
+  })
+  is_removable?: boolean | null;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    nullable: true,
+    description: 'Признак разрешения создания задач в столбце',
+  })
+  is_task_creation_allowed?: boolean;
+
+  @ApiProperty({
+    type: Boolean,
+    required: false,
+    nullable: true,
+    description: 'Признак столбца финального этапа',
+  })
+  is_final_stage?: boolean | null;
 }
 
 class CreateProjectBody {
@@ -123,6 +173,14 @@ class CreateProjectTaskBody {
     description: 'ID исполнителя задачи',
   })
   executor_member_id: number | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Дедлайн задачи',
+  })
+  deadline_date: string | null;
 }
 
 class UpdateProjectTaskBody {
@@ -165,13 +223,47 @@ class UpdateProjectTaskBody {
     description: 'ID исполнителя задачи',
   })
   executor_member_id: number | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Дедлайн задачи',
+  })
+  deadline_date: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Дата завершения задачи',
+  })
+  done_date: string | null;
+}
+
+class UpdateProjectTaskListOrderBody {
+  @ApiProperty({
+    description: 'ID задачи',
+    type: Number,
+    required: true,
+  })
+  id: number;
+
+  @ApiProperty({
+    description: 'Порядок задачи в списке',
+    type: Number,
+    required: true,
+  })
+  list_order: number;
 }
 
 export {
   CreateProjectBody,
   ShortInfoProjectDto,
   ProjectColumn,
+  CreateProjectColumnBody,
   CreateProjectTaskBody,
   UpdateProjectBody,
   UpdateProjectTaskBody,
+  UpdateProjectTaskListOrderBody,
 };

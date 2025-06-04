@@ -14,23 +14,30 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   CreateProjectBody,
+  CreateProjectColumnBody,
   CreateProjectTaskBody,
+  ProjectColumn,
   UpdateProjectBody,
   UpdateProjectTaskBody,
+  UpdateProjectTaskListOrderBody,
 } from '@/projects/dto/swagger.dto';
 import {
   PROJECT_CREATE_FORBIDDEN,
   PROJECT_NOT_FOUND,
   PROJECT_TASK_NOT_FOUND,
-  PROJECT_UPDATE_FORBIDDEN,
+  TASK_NOT_FOUND,
   TEAM_NOT_FOUND,
   USER_NOT_FOUND,
   WRONG_BODY,
+  WRONG_PARAMS,
 } from '@/app/constants/error.constant';
 import {
+  createProjectColumnSchema,
   createProjectSchema,
   createProjectTaskSchema,
+  projectColumnSchema,
   updateProjectSchema,
+  updateProjectTaskListOrderBodySchema,
   updateProjectTaskSchema,
 } from '@/projects/schemas/projects.schema';
 import { ProjectDto, ProjectTaskDto } from '@/projects/dto/projects.dto';
@@ -175,10 +182,40 @@ export class ProjectsService {
       executor: executor,
       priority: body?.priority as PROJECT_TASK_PRIORITY,
       list_order: (biggestListOrderTask?.list_order ?? -1) + 1,
+      deadline_date: body?.deadline_date,
       project,
     });
 
     return new ProjectTaskDto(project_task);
+  }
+
+  async createProjectColumn(project_id: number, body: CreateProjectColumnBody) {
+    const { error } = createProjectColumnSchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    const project = await this.projectRepository.findOne({
+      where: { id: project_id },
+      relations: ['team', 'team.members'],
+    });
+
+    if (!project) {
+      throw new NotFoundException(PROJECT_NOT_FOUND);
+    }
+
+    const newColumn = {
+      ...body,
+      id: uuid(),
+      order: project.columns.length,
+    };
+
+    await this.projectRepository.update(project.id, {
+      columns: [...project.columns, newColumn],
+    });
+
+    return newColumn;
   }
 
   async updateProject(
@@ -201,50 +238,59 @@ export class ProjectsService {
       throw new NotFoundException(PROJECT_NOT_FOUND);
     }
 
-    const member = project.team.members.find(
-      (member) => member.user.id === user_id,
-    );
-
-    if (!member) {
-      throw new BadRequestException(PROJECT_NOT_FOUND);
-    }
-
-    const right = member.projects_rights?.find(
-      (right) => right.project_id === project_id,
-    );
-
-    if (!right?.update) {
-      throw new ForbiddenException(PROJECT_UPDATE_FORBIDDEN);
-    }
-
     if (
       body?.columns?.length &&
-      !body?.columns?.some((column) => !column.removable)
+      !body?.columns?.some((column) => !column.is_removable)
     ) {
       throw new BadRequestException(WRONG_BODY);
     }
 
     await this.projectRepository.update(project_id, {
       name: body?.name ?? project.name,
-      columns:
-        body?.columns?.map((column) => {
-          if (!column.id) {
-            return {
-              ...column,
-              id: uuid(),
-              removable: true,
-            };
-          }
+      columns: body?.columns ?? project.columns,
+    });
 
-          return column;
-        }) ?? project.columns,
+    return new ProjectDto(project, user_id);
+  }
+
+  async updateProjectColumn(
+    user_id: number,
+    project_id: number,
+    column_id: string,
+    body: ProjectColumn,
+  ) {
+    const { error } = projectColumnSchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    const project = await this.projectRepository.findOne({
+      where: { id: project_id },
+      relations: ['team', 'team.members'],
+    });
+
+    if (!project) {
+      throw new NotFoundException(PROJECT_NOT_FOUND);
+    }
+
+    await this.projectRepository.update(project_id, {
+      columns: project.columns.map((column) => {
+        if (column.id === column_id) {
+          return {
+            ...column,
+            ...body,
+          };
+        }
+
+        return column;
+      }),
     });
 
     return new ProjectDto(project, user_id);
   }
 
   async updateProjectTask(
-    user_id: number,
     project_id: number,
     task_id: number,
     body: UpdateProjectTaskBody,
@@ -272,35 +318,66 @@ export class ProjectsService {
       throw new NotFoundException(PROJECT_TASK_NOT_FOUND);
     }
 
-    const member = project.team.members.find(
-      (member) => member.user.id === user_id,
-    );
-
-    if (!member) {
-      throw new BadRequestException(PROJECT_NOT_FOUND);
-    }
-
-    const right = member.projects_rights?.find(
-      (right) => right.project_id === project_id,
-    );
-
-    if (!right?.update) {
-      throw new ForbiddenException(PROJECT_UPDATE_FORBIDDEN);
-    }
-
     await this.projectTaskRepository.update(task_id, {
       name: body?.name ?? project_task.name,
       description: body?.description ?? project_task?.description,
       column: body?.column ?? project_task.column,
-      priority:
-        (body?.priority as PROJECT_TASK_PRIORITY) ?? project_task?.priority,
+      priority: body?.priority as PROJECT_TASK_PRIORITY,
       executor: body?.executor_member_id
         ? project.team.members.find(
             (member) => member.id === body?.executor_member_id,
           )
         : project_task?.executor,
+      deadline_date: body?.deadline_date,
+      done_date: body?.done_date,
     });
 
     return new ProjectTaskDto(project_task);
+  }
+
+  async updateProjectTaskListOrder(body: UpdateProjectTaskListOrderBody[]) {
+    const { error } = updateProjectTaskListOrderBodySchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    for (const task of body) {
+      await this.projectTaskRepository.update(task.id, {
+        list_order: task.list_order,
+      });
+    }
+  }
+
+  async deleteProjectTask(task_id: number) {
+    const task = await this.projectTaskRepository.findOneBy({ id: task_id });
+
+    if (!task) {
+      throw new NotFoundException(TASK_NOT_FOUND);
+    }
+
+    await this.projectTaskRepository.delete(task_id);
+
+    return new ProjectTaskDto(task);
+  }
+
+  async deleteProjectColumn(column_id: string, project_id: number) {
+    const project = await this.projectRepository.findOneBy({ id: project_id });
+
+    if (!project) {
+      throw new NotFoundException(PROJECT_NOT_FOUND);
+    }
+
+    const column = project.columns.find((column) => column.id === column_id);
+
+    if (!column) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    await this.projectRepository.update(project_id, {
+      columns: project.columns.filter((column) => column.id !== column_id),
+    });
+
+    return column;
   }
 }

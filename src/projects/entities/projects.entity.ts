@@ -72,6 +72,12 @@ class ProjectTaskEntity {
   @Column({ nullable: false })
   list_order: number;
 
+  @Column({ nullable: true, type: 'text' })
+  deadline_date: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  done_date: string | null;
+
   @ManyToOne(() => ProjectEntity, (project) => project.project_tasks)
   project: ProjectEntity;
 

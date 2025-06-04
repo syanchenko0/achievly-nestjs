@@ -6,24 +6,33 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { RightsDecorator } from '@/projects/decorators/rights.decorator';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ProjectEntity } from '@/projects/entities/projects.entity';
+import { Repository } from 'typeorm';
+import { ExtendedRequest } from '@/app/types/common.type';
 import {
   PROJECT_NOT_FOUND,
   WRONG_PARAMS,
   WRONG_TOKEN,
 } from '@/app/constants/error.constant';
-import { ExtendedRequest } from '@/app/types/common.type';
-import { Repository } from 'typeorm';
-import { ProjectEntity } from '@/projects/entities/projects.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
-class ProjectIncludeGuard implements CanActivate {
+export class RightsGuard implements CanActivate {
   constructor(
+    private reflector: Reflector,
     @InjectRepository(ProjectEntity)
     private projectRepository: Repository<ProjectEntity>,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  async canActivate(context: ExecutionContext) {
+    const roles = this.reflector.get(RightsDecorator, context.getHandler());
+
+    if (!roles) {
+      return true;
+    }
+
     const request: ExtendedRequest = context.switchToHttp().getRequest();
 
     const { params, query } = request;
@@ -59,12 +68,18 @@ class ProjectIncludeGuard implements CanActivate {
       (right) => right.project_id === project.id,
     );
 
-    if (!right?.read) {
+    if (!right) {
       throw new BadRequestException(PROJECT_NOT_FOUND);
     }
+
+    roles.forEach((role) => {
+      if (right[role]) {
+        return true;
+      } else {
+        throw new BadRequestException(PROJECT_NOT_FOUND);
+      }
+    });
 
     return true;
   }
 }
-
-export { ProjectIncludeGuard };

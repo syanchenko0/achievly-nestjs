@@ -5,19 +5,25 @@ const DEFAULT_PROJECT_COLUMNS = [
     id: uuid(),
     name: 'Нужно сделать',
     order: 0,
-    removable: false,
+    is_removable: false,
+    is_task_creation_allowed: true,
+    is_final_stage: false,
   },
   {
     id: uuid(),
     name: 'В работе',
     order: 1,
-    removable: true,
+    is_removable: true,
+    is_task_creation_allowed: false,
+    is_final_stage: false,
   },
   {
     id: uuid(),
     name: 'Завершено',
     order: 2,
-    removable: true,
+    is_removable: true,
+    is_task_creation_allowed: false,
+    is_final_stage: true,
   },
 ];
 
