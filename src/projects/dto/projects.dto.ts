@@ -27,7 +27,7 @@ class ProjectTaskDto {
   description: string | null;
 
   @ApiProperty({
-    type: ProjectColumn,
+    type: () => ProjectColumn,
     required: true,
     nullable: false,
     description: 'Столбец задачи',
@@ -43,7 +43,7 @@ class ProjectTaskDto {
   priority: string | null;
 
   @ApiProperty({
-    type: MemberDto,
+    type: () => MemberDto,
     required: true,
     nullable: false,
     description: 'Автор задачи',
@@ -51,7 +51,7 @@ class ProjectTaskDto {
   author: MemberDto;
 
   @ApiProperty({
-    type: MemberDto,
+    type: () => MemberDto,
     required: false,
     nullable: true,
     description: 'Исполнитель задачи',
@@ -100,7 +100,7 @@ class ProjectDto {
   name: string;
 
   @ApiProperty({
-    type: ProjectColumn,
+    type: () => ProjectColumn,
     required: true,
     nullable: false,
     isArray: true,
@@ -109,21 +109,21 @@ class ProjectDto {
   columns: ProjectColumn[];
 
   @ApiProperty({
-    type: TeamDto,
+    type: () => TeamDto,
     required: true,
     description: 'Команда проекта',
   })
   team: TeamDto;
 
   @ApiProperty({
-    type: ProjectRightsDto,
+    type: () => ProjectRightsDto,
     required: false,
     description: 'Права пользователя в текущем проекте',
   })
   user_project_rights?: ProjectRightsDto;
 
   @ApiProperty({
-    type: ProjectTaskDto,
+    type: () => ProjectTaskDto,
     isArray: true,
     required: false,
     nullable: true,

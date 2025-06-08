@@ -2,6 +2,7 @@ import {
   BadRequestException,
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -14,6 +15,7 @@ import { Repository } from 'typeorm';
 import { ExtendedRequest } from '@/app/types/common.type';
 import {
   PROJECT_NOT_FOUND,
+  PROJECT_UPDATE_FORBIDDEN,
   WRONG_PARAMS,
   WRONG_TOKEN,
 } from '@/app/constants/error.constant';
@@ -61,7 +63,7 @@ export class RightsGuard implements CanActivate {
     );
 
     if (!member) {
-      throw new BadRequestException(PROJECT_NOT_FOUND);
+      throw new NotFoundException(PROJECT_NOT_FOUND);
     }
 
     const right = member?.projects_rights?.find(
@@ -69,14 +71,14 @@ export class RightsGuard implements CanActivate {
     );
 
     if (!right) {
-      throw new BadRequestException(PROJECT_NOT_FOUND);
+      throw new NotFoundException(PROJECT_NOT_FOUND);
     }
 
     roles.forEach((role) => {
       if (right[role]) {
         return true;
       } else {
-        throw new BadRequestException(PROJECT_NOT_FOUND);
+        throw new ForbiddenException(PROJECT_UPDATE_FORBIDDEN);
       }
     });
 

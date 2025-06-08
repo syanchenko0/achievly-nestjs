@@ -14,6 +14,7 @@ import {
   CreateProjectBody,
   CreateProjectColumnBody,
   CreateProjectTaskBody,
+  GeneralInfoProjectDto,
   ProjectColumn,
   ShortInfoProjectDto,
   UpdateProjectBody,
@@ -35,6 +36,7 @@ import { JwtAuthGuard } from '@/auth/guards/auth.guard';
 import { UpdateResult } from 'typeorm';
 import { UpdateTaskListOrderBody } from '@/goals/dto/swagger.dto';
 import { RightsDecorator } from '@/projects/decorators/rights.decorator';
+import { RightsGuard } from '@/projects/guards/rights.guard';
 
 @ApiTags('Projects')
 @UseGuards(JwtAuthGuard)
@@ -65,6 +67,7 @@ export class ProjectsController {
   }
 
   @RightsDecorator(['read', 'create'])
+  @UseGuards(RightsGuard)
   @Post('/:project_id/tasks')
   @ApiOperation({
     summary: 'Create project task',
@@ -92,6 +95,7 @@ export class ProjectsController {
   }
 
   @RightsDecorator(['read', 'create'])
+  @UseGuards(RightsGuard)
   @Post('/:project_id/columns')
   @ApiOperation({
     summary: 'Create project column',
@@ -118,6 +122,7 @@ export class ProjectsController {
   }
 
   @RightsDecorator(['read', 'update'])
+  @UseGuards(RightsGuard)
   @Patch('/:project_id')
   @ApiOperation({ summary: 'Update project', operationId: 'updateProject' })
   @ApiResponse({ status: 200, type: ProjectDto })
@@ -142,6 +147,7 @@ export class ProjectsController {
   }
 
   @RightsDecorator(['read', 'update'])
+  @UseGuards(RightsGuard)
   @Patch('/:project_id/columns/:column_id')
   @ApiOperation({
     summary: 'Update project column',
@@ -175,6 +181,7 @@ export class ProjectsController {
   }
 
   @RightsDecorator(['read', 'update'])
+  @UseGuards(RightsGuard)
   @Patch('/:project_id/tasks/:task_id')
   @ApiOperation({
     summary: 'Update project task',
@@ -207,6 +214,7 @@ export class ProjectsController {
   }
 
   @RightsDecorator(['read', 'update'])
+  @UseGuards(RightsGuard)
   @Post('/:project_id/tasks/list_order')
   @ApiOperation({
     operationId: 'updateProjectTaskListOrder',
@@ -243,7 +251,30 @@ export class ProjectsController {
     return this.projectService.getProjects(Number(query.team_id), user.id);
   }
 
+  @UseGuards(TeamIncludeGuard)
+  @Get('/general_info')
+  @ApiOperation({
+    summary: 'Get projects general info',
+    operationId: 'getProjectsGeneralInfo',
+  })
+  @ApiResponse({ status: 200, type: GeneralInfoProjectDto })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiQuery({ name: 'team_id', type: Number, required: true })
+  async getProjectsGeneralInfo(@Req() request: ExtendedRequest) {
+    const { query, user } = request;
+
+    if (!query?.team_id || Number.isNaN(Number(query?.team_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.projectService.getProjectsGeneralInfo(
+      Number(query.team_id),
+      user.id,
+    );
+  }
+
   @RightsDecorator(['read'])
+  @UseGuards(RightsGuard)
   @Get('/:project_id')
   @ApiOperation({ summary: 'Get project', operationId: 'getProject' })
   @ApiResponse({ status: 200, type: ProjectDto })
@@ -260,6 +291,30 @@ export class ProjectsController {
   }
 
   @RightsDecorator(['read', 'delete'])
+  @UseGuards(RightsGuard)
+  @Delete('/:project_id')
+  @ApiOperation({
+    summary: 'Delete project',
+    operationId: 'deleteProject',
+  })
+  @ApiResponse({ status: 200, type: ProjectDto })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'project_id', type: String, required: true })
+  async deleteProject(@Req() request: ExtendedRequest) {
+    const { params, user } = request;
+
+    if (!params?.project_id || Number.isNaN(Number(params?.project_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.projectService.deleteProject(
+      Number(params.project_id),
+      user.id,
+    );
+  }
+
+  @RightsDecorator(['read', 'delete'])
+  @UseGuards(RightsGuard)
   @Delete('/:project_id/tasks/:task_id')
   @ApiOperation({
     summary: 'Delete project task',
@@ -280,6 +335,7 @@ export class ProjectsController {
   }
 
   @RightsDecorator(['read', 'delete'])
+  @UseGuards(RightsGuard)
   @Delete('/:project_id/columns/:column_id')
   @ApiOperation({
     summary: 'Delete project column',

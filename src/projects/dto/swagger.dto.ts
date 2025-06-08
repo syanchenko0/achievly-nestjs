@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ProjectDto } from '@/projects/dto/projects.dto';
 
 class ProjectColumn {
   @ApiProperty({
@@ -105,7 +106,7 @@ class UpdateProjectBody {
   name: string | null;
 
   @ApiProperty({
-    type: ProjectColumn,
+    type: () => ProjectColumn,
     required: false,
     nullable: true,
     isArray: true,
@@ -151,7 +152,7 @@ class CreateProjectTaskBody {
   description: string | null;
 
   @ApiProperty({
-    type: ProjectColumn,
+    type: () => ProjectColumn,
     required: true,
     nullable: false,
     description: 'Столбец задачи',
@@ -201,7 +202,7 @@ class UpdateProjectTaskBody {
   description: string | null;
 
   @ApiProperty({
-    type: ProjectColumn,
+    type: () => ProjectColumn,
     required: false,
     nullable: true,
     description: 'Столбец задачи',
@@ -257,6 +258,24 @@ class UpdateProjectTaskListOrderBody {
   list_order: number;
 }
 
+class GeneralInfoProjectDto {
+  @ApiProperty({
+    type: () => ProjectDto,
+    isArray: true,
+    required: true,
+    nullable: false,
+  })
+  upcoming_deadline: ProjectDto[];
+
+  @ApiProperty({
+    type: () => ProjectDto,
+    isArray: true,
+    required: true,
+    nullable: false,
+  })
+  assigned_me: ProjectDto[];
+}
+
 export {
   CreateProjectBody,
   ShortInfoProjectDto,
@@ -266,4 +285,5 @@ export {
   UpdateProjectBody,
   UpdateProjectTaskBody,
   UpdateProjectTaskListOrderBody,
+  GeneralInfoProjectDto,
 };

@@ -34,6 +34,7 @@ import {
   TaskStatusEnum,
 } from '@/goals/constants/goal.constant';
 import { TaskDto } from '@/goals/dto/task.dto';
+import { addDays, isWithinInterval, parseISO } from 'date-fns';
 
 @Injectable()
 export class GoalsService {
@@ -120,6 +121,33 @@ export class GoalsService {
     return (goals || [])
       .sort((a, b) => (a.list_order ?? 0) - (b.list_order ?? 0))
       .map((goal) => new GoalDto(goal));
+  }
+
+  async getGoalsGeneralInfo(user_id: number) {
+    const goals = await this.goalRepository.find({
+      where: { user: { id: user_id } },
+      relations: ['tasks'],
+    });
+
+    const today = new Date();
+
+    const threeDaysAgo = addDays(today, 3);
+
+    const upcomingDeadlineTasks = (goals ?? []).map((goal) => ({
+      ...goal,
+      tasks: (goal.tasks ?? [])?.filter((task) => {
+        if (task.deadline_date) {
+          const deadline_date = parseISO(task.deadline_date);
+          return isWithinInterval(deadline_date, {
+            start: threeDaysAgo,
+            end: today,
+          });
+        }
+        return false;
+      }),
+    }));
+
+    return upcomingDeadlineTasks.map((goal) => new GoalDto(goal));
   }
 
   async updateGoal(id: number, body: UpdateGoalBody) {

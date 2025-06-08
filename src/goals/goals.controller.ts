@@ -49,6 +49,19 @@ export class GoalsController {
     return this.goalsService.getGoals(user, query);
   }
 
+  @Get('/general_info')
+  @ApiOperation({
+    operationId: 'getGoalsGeneralInfo',
+    summary: 'Get goals general info',
+  })
+  @ApiResponse({ status: 200, type: GoalDto, isArray: true })
+  @ApiResponse({ status: 400, type: BadRequest })
+  async getGoalsGeneralInfo(@Req() request: ExtendedRequest) {
+    const { user } = request;
+
+    return this.goalsService.getGoalsGeneralInfo(user.id);
+  }
+
   @Get('/tasks')
   @ApiOperation({ operationId: 'getTasks', summary: 'Get tasks' })
   @ApiResponse({ status: 200, type: TaskDto, isArray: true })

@@ -47,6 +47,7 @@ import {
   PROJECT_TASK_PRIORITY,
 } from '@/projects/constants/projects.constant';
 import { v4 as uuid } from 'uuid';
+import { addDays, isWithinInterval, parseISO } from 'date-fns';
 
 @Injectable()
 export class ProjectsService {
@@ -95,6 +96,54 @@ export class ProjectsService {
     }
 
     return new ProjectDto(project, user_id);
+  }
+
+  async getProjectsGeneralInfo(team_id: number, user_id: number) {
+    const projects = await this.projectRepository.find({
+      where: { team: { id: team_id } },
+      relations: ['team', 'team.members', 'project_tasks'],
+    });
+
+    if (!projects?.length) {
+      throw new NotFoundException(PROJECT_NOT_FOUND);
+    }
+
+    const today = new Date();
+
+    const threeDaysAgo = addDays(today, 3);
+
+    const upcomingDeadlineTasks = projects.map((project) => ({
+      ...project,
+      project_tasks: (project.project_tasks ?? [])?.filter((task) => {
+        if (task.deadline_date) {
+          const deadline_date = parseISO(task.deadline_date);
+          return isWithinInterval(deadline_date, {
+            start: threeDaysAgo,
+            end: today,
+          });
+        }
+        return false;
+      }),
+    }));
+
+    const assignedMeTasks = projects.map((project) => ({
+      ...project,
+      project_tasks: (project.project_tasks ?? [])?.filter((task) => {
+        if (task.executor) {
+          return task.executor.user.id === user_id;
+        }
+        return false;
+      }),
+    }));
+
+    return {
+      upcoming_deadline: upcomingDeadlineTasks.map(
+        (project) => new ProjectDto(project, user_id),
+      ),
+      assigned_me: assignedMeTasks.map(
+        (project) => new ProjectDto(project, user_id),
+      ),
+    };
   }
 
   async createProject(
@@ -347,6 +396,23 @@ export class ProjectsService {
         list_order: task.list_order,
       });
     }
+  }
+
+  async deleteProject(project_id: number, user_id: number) {
+    const project = await this.projectRepository.findOne({
+      where: { id: project_id },
+      relations: ['team', 'team.members', 'project_tasks'],
+    });
+
+    if (!project) {
+      throw new NotFoundException(PROJECT_NOT_FOUND);
+    }
+
+    await this.projectTaskRepository.delete({ project: { id: project_id } });
+
+    await this.projectRepository.delete(project_id);
+
+    return new ProjectDto(project, user_id);
   }
 
   async deleteProjectTask(task_id: number) {
