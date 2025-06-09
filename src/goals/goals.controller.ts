@@ -38,6 +38,19 @@ import { TaskDto } from '@/goals/dto/task.dto';
 export class GoalsController {
   constructor(private readonly goalsService: GoalsService) {}
 
+  @Post('/generate')
+  @ApiOperation({ operationId: 'generateGoals', summary: 'Generate goal' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiBody({ type: String })
+  async generateGoals(
+    @Req() request: Omit<ExtendedRequest, 'body'> & { body: string },
+  ) {
+    const { body } = request;
+
+    return this.goalsService.generateGoals(body);
+  }
+
   @Get('/')
   @ApiOperation({ operationId: 'getGoals', summary: 'Get goals' })
   @ApiResponse({ status: 200, type: GoalDto, isArray: true })
