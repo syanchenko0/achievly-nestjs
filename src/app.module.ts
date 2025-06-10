@@ -8,6 +8,7 @@ import { TeamsModule } from './teams/teams.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppGateway } from './app.gateway';
 
 @Module({
   imports: [
@@ -28,12 +29,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       database: process.env.POSTGRES_DATABASE,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-      // synchronize: process.env.IS_DEV === 'true',
       synchronize: false,
-      migrationsRun: process.env.IS_DEV === 'false',
+      migrationsRun: true,
     }),
   ],
   controllers: [],
-  providers: [],
+  providers: [AppGateway],
 })
 export class AppModule {}

@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { NotificationsGateway } from '@/notifications/notifications.gateway';
 import { Repository } from 'typeorm';
 import { NotificationEntity } from '@/notifications/entities/notification.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +13,6 @@ export class NotificationsService {
   constructor(
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
-    private readonly notificationsGateway: NotificationsGateway,
     private readonly usersService: UsersService,
   ) {}
 
@@ -38,8 +36,6 @@ export class NotificationsService {
       reject: body?.reject,
       user,
     });
-
-    this.notificationsGateway.sendNotification('test', body);
 
     return new NotificationDto(notification);
   }

@@ -34,42 +34,7 @@ import {
   TaskStatusEnum,
 } from '@/goals/constants/goal.constant';
 import { TaskDto } from '@/goals/dto/task.dto';
-import { addDays, format, isWithinInterval, parseISO } from 'date-fns';
-
-type UserData = {
-  id: number;
-  email: string;
-  username: string;
-  picture: string;
-  createdAt: string;
-  updatedAt: string;
-  goals: Goal[];
-  events: unknown[]; // или можно определить более конкретный тип, если известна структура events
-};
-
-type Goal = {
-  id: number;
-  type: string; // если могут быть другие типы
-  title: string;
-  status: string; // если могут быть другие статусы
-  note: string | null;
-  category: string | null;
-  tasks: Task[];
-  habits: unknown[]; // или можно определить более конкретный тип, если известна структура habits
-  achievedTimestamp: string | null;
-  deadlineTimestamp: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type Task = {
-  id: string;
-  done: boolean;
-  note: string;
-  title: string;
-  doneTimestamp?: number; // optional так как есть не у всех задач
-  deadlineTimestamp: number | null;
-};
+import { addDays, isWithinInterval, parseISO } from 'date-fns';
 
 @Injectable()
 export class GoalsService {
@@ -138,71 +103,6 @@ export class GoalsService {
     }
 
     return new GoalDto(goal);
-  }
-
-  async generateGoals(body: string) {
-    const object: UserData = body as unknown as UserData;
-
-    const user = await this.usersService.create({
-      username: object.username,
-      email: object.email,
-      picture_url: object.picture,
-    });
-
-    for (const goal of object.goals) {
-      const biggestListOrderGoal = await this.goalRepository
-        .createQueryBuilder('goal')
-        .where('goal.achieved_date IS NULL')
-        .orderBy('goal.list_order', 'DESC')
-        .limit(1)
-        .getOne();
-
-      const newGoal = await this.goalRepository.save({
-        title: goal.title,
-        category: (goal.category as GoalCategoryEnum) ?? 'career',
-        deadline_date: goal?.deadlineTimestamp
-          ? format(new Date(Number(goal.deadlineTimestamp)), 'yyyy-MM-dd')
-          : undefined,
-        achieved_date: goal?.achievedTimestamp
-          ? format(new Date(Number(goal.achievedTimestamp)), 'yyyy-MM-dd')
-          : undefined,
-        note: goal?.note ? goal?.note : undefined,
-        status: goal.status as GoalStatusEnum,
-        list_order: (biggestListOrderGoal?.list_order ?? -1) + 1,
-        user,
-      });
-
-      if (goal?.tasks?.length) {
-        const biggestListOrderTask = await this.taskRepository
-          .createQueryBuilder('task')
-          .where('task.done_date IS NULL')
-          .orderBy('task.list_order', 'DESC')
-          .limit(1)
-          .getOne();
-
-        const transformedTasks = goal.tasks.map((task, index) => ({
-          ...task,
-          list_order: (biggestListOrderTask?.list_order ?? -1) + (index + 1),
-          goal_list_order: index,
-        }));
-
-        for (const task of transformedTasks) {
-          await this.taskRepository.save({
-            title: task.title,
-            deadline_date: task?.deadlineTimestamp
-              ? format(new Date(Number(task.deadlineTimestamp)), 'yyyy-MM-dd')
-              : undefined,
-            done_date: task?.doneTimestamp
-              ? format(new Date(Number(task.doneTimestamp)), 'yyyy-MM-dd')
-              : undefined,
-            note: task?.note,
-            list_order: task?.list_order,
-            goal_list_order: task?.goal_list_order,
-            goal: newGoal,
-          });
-        }
-      }
-    }
   }
 
   async getGoals(user: RequestUser, query?: Record<string, unknown>) {

@@ -1,5 +1,5 @@
 import { MemberEntity } from '@/teams/entities/member.entity';
-import { UpdateTeamMemberBody } from '@/teams/dto/swagger.dto';
+import { MemberDto, UpdateTeamMemberBody } from '@/teams/dto/swagger.dto';
 import { MemberRoles } from '@/teams/types/teams.type';
 
 const updateMemberProjectsRights = (
@@ -25,15 +25,15 @@ const updateMemberProjectsRights = (
   });
 };
 
-const findOwner = (members: MemberEntity[], user_id: number) => {
+const findOwner = (members: (MemberEntity | MemberDto)[], user_id: number) => {
   return members.some(
-    (m) => m.user.id === user_id && m.role === MemberRoles.owner,
+    (member) => member.user.id === user_id && member.role === MemberRoles.owner,
   );
 };
 
-const findAdmin = (members: MemberEntity[], user_id: number) => {
+const findAdmin = (members: (MemberEntity | MemberDto)[], user_id: number) => {
   return members.some(
-    (m) => m.user.id === user_id && m.role === MemberRoles.admin,
+    (member) => member.user.id === user_id && member.role === MemberRoles.admin,
   );
 };
 

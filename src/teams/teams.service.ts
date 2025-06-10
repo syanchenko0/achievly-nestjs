@@ -90,11 +90,17 @@ export class TeamsService {
     return new TeamGeneralInfoDto(team);
   }
 
-  async getTeamById(team_id: number) {
-    return await this.teamRepository.findOne({
+  async getTeamById(team_id: number, user_id: number) {
+    const team = await this.teamRepository.findOne({
       where: { id: team_id },
       relations: ['members', 'members.team', 'users'],
     });
+
+    if (!team) {
+      throw new BadRequestException(TEAM_NOT_FOUND);
+    }
+
+    return new TeamDto(team, user_id);
   }
 
   async getTeamsByUserId(user_id: number) {

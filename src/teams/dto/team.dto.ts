@@ -50,9 +50,9 @@ class TeamDto {
     this.user_projects_rights = member?.projects_rights?.filter(
       (right) => right.read,
     ) as ProjectRightsDto[];
-    this.members = team.members?.map(
-      (member) => new MemberDto(member, user_id, role),
-    );
+    this.members = team.members
+      ?.sort((a, b) => a.id - b.id)
+      ?.map((member) => new MemberDto(member, user_id, role));
   }
 }
 

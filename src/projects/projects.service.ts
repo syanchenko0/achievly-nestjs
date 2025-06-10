@@ -26,7 +26,6 @@ import {
   PROJECT_NOT_FOUND,
   PROJECT_TASK_NOT_FOUND,
   TASK_NOT_FOUND,
-  TEAM_NOT_FOUND,
   USER_NOT_FOUND,
   WRONG_BODY,
   WRONG_PARAMS,
@@ -157,13 +156,9 @@ export class ProjectsService {
       throw new BadRequestException(USER_NOT_FOUND);
     }
 
-    const team = await this.teamsService.getTeamById(team_id);
+    const team = await this.teamsService.getTeamById(team_id, user_id);
 
-    if (!team) {
-      throw new BadRequestException(TEAM_NOT_FOUND);
-    }
-
-    if (!findOwner(team.members, user.id)) {
+    if (!findOwner(team.members, user_id)) {
       throw new ForbiddenException(PROJECT_CREATE_FORBIDDEN);
     }
 

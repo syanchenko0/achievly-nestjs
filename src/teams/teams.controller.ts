@@ -10,11 +10,7 @@ import {
 } from '@nestjs/common';
 import { TeamsService } from '@/teams/teams.service';
 import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
-import {
-  TEAM_NOT_FOUND,
-  WRONG_BODY,
-  WRONG_PARAMS,
-} from '@/app/constants/error.constant';
+import { WRONG_BODY, WRONG_PARAMS } from '@/app/constants/error.constant';
 import {
   ApiBody,
   ApiOperation,
@@ -85,13 +81,7 @@ export class TeamsController {
       throw new BadRequestException(WRONG_PARAMS);
     }
 
-    const team = await this.teamService.getTeamById(Number(params.team_id));
-
-    if (!team) {
-      throw new BadRequestException(TEAM_NOT_FOUND);
-    }
-
-    return new TeamDto(team, user.id);
+    return await this.teamService.getTeamById(Number(params.team_id), user.id);
   }
 
   @Get('/:team_id/info')
