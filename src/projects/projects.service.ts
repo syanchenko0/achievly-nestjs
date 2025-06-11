@@ -403,6 +403,8 @@ export class ProjectsService {
       throw new NotFoundException(PROJECT_NOT_FOUND);
     }
 
+    await this.teamsService.removeProjectsRights(project.team.id, project.id);
+
     await this.projectTaskRepository.delete({ project: { id: project_id } });
 
     await this.projectRepository.delete(project_id);

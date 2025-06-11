@@ -219,6 +219,28 @@ export class TeamsService {
     await this.memberRepository.save(team.members);
   }
 
+  async removeProjectsRights(team_id: number, project_id: number) {
+    const team = await this.teamRepository.findOne({
+      where: { id: team_id },
+      relations: ['members'],
+    });
+
+    if (!team) {
+      throw new NotFoundException(TEAM_NOT_FOUND);
+    }
+
+    team.members = team.members.map((member) => {
+      return {
+        ...member,
+        projects_rights: member.projects_rights?.filter(
+          (right) => right.project_id !== project_id,
+        ),
+      };
+    });
+
+    await this.memberRepository.save(team.members);
+  }
+
   async getJoinLink(team_id: number) {
     const team = await this.teamRepository.findOneBy({ id: team_id });
 
