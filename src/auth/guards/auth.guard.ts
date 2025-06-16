@@ -48,10 +48,16 @@ export class JwtAuthGuard implements CanActivate {
         }
 
         if (!refreshToken) {
-          const refreshToken = await this.jwtService.signAsync(tokenParsed, {
-            expiresIn: TOKEN_EXPIRATION_REFRESH,
-            privateKey: this.configService.get<string>('JWT_SECRET_KEY'),
-          });
+          const refreshToken = await this.jwtService.signAsync(
+            {
+              id: tokenParsed.id,
+              username: tokenParsed.username,
+            },
+            {
+              expiresIn: TOKEN_EXPIRATION_REFRESH,
+              privateKey: this.configService.get<string>('JWT_SECRET_KEY'),
+            },
+          );
 
           const refreshDay =
             parseInt(TOKEN_EXPIRATION_REFRESH) * 24 * 60 * 60 * 1000;
@@ -87,10 +93,16 @@ export class JwtAuthGuard implements CanActivate {
           throw new UnauthorizedException(WRONG_TOKEN);
         }
 
-        const accessToken = await this.jwtService.signAsync(tokenParsed, {
-          expiresIn: TOKEN_EXPIRATION_ACCESS,
-          privateKey: this.configService.get<string>('JWT_SECRET_KEY'),
-        });
+        const accessToken = await this.jwtService.signAsync(
+          {
+            id: tokenParsed.id,
+            username: tokenParsed.username,
+          },
+          {
+            expiresIn: TOKEN_EXPIRATION_ACCESS,
+            privateKey: this.configService.get<string>('JWT_SECRET_KEY'),
+          },
+        );
 
         const accessDay =
           parseInt(TOKEN_EXPIRATION_ACCESS) * 24 * 60 * 60 * 1000;
