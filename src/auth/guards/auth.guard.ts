@@ -65,6 +65,8 @@ export class JwtAuthGuard implements CanActivate {
         }
 
         request['user'] = tokenParsed;
+
+        return true;
       } catch {
         throw new UnauthorizedException(WRONG_TOKEN);
       }
@@ -101,6 +103,8 @@ export class JwtAuthGuard implements CanActivate {
         });
 
         request['user'] = tokenParsed;
+
+        return true;
       } catch {
         throw new UnauthorizedException(WRONG_TOKEN);
       }
