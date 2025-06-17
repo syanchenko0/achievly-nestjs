@@ -211,6 +211,13 @@ export class GoalsService {
       await this.taskRepository.remove(goal.tasks);
     }
 
+    if (body?.achieved_date) {
+      await this.taskRepository.update(
+        { goal: { id } },
+        { done_date: body?.achieved_date },
+      );
+    }
+
     return await this.goalRepository.update(goal.id, {
       title: body?.title || goal?.title,
       category: (body?.category as GoalCategoryEnum) || goal.category,
