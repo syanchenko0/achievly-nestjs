@@ -9,6 +9,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppGateway } from './app.gateway';
+import { BudgetModule } from './budget/budget.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AppGateway } from './app.gateway';
       synchronize: false,
       migrationsRun: true,
     }),
+    BudgetModule,
   ],
   controllers: [],
   providers: [AppGateway],

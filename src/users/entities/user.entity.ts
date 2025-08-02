@@ -10,6 +10,7 @@ import { EventEntity } from '@/events/entities/event.entity';
 import { NotificationEntity } from '@/notifications/entities/notification.entity';
 import { ProjectEntity } from '@/projects/entities/projects.entity';
 import { TeamEntity } from '@/teams/entities/team.entity';
+import { BudgetAccountingEntity } from '@/budget/entities/budget.entity';
 
 @Entity()
 class UserEntity {
@@ -39,6 +40,12 @@ class UserEntity {
 
   @ManyToMany(() => TeamEntity, (team) => team.users)
   teams: TeamEntity[];
+
+  @OneToMany(
+    () => BudgetAccountingEntity,
+    (budget_accounting) => budget_accounting.user,
+  )
+  budget_accounting: BudgetAccountingEntity[];
 }
 
 export { UserEntity };

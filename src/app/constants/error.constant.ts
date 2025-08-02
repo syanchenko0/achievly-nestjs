@@ -53,6 +53,8 @@ const PROJECT_FORBIDDEN = 'Проект недоступен для пользо
 const PROJECT_UPDATE_FORBIDDEN =
   'Редактирование проекта недоступно для пользователя';
 
+const BUDGET_NOT_FOUND = 'Бюджет пользователя не найден';
+
 export {
   WRONG_BODY,
   WRONG_PARAMS,
@@ -77,4 +79,5 @@ export {
   PROJECT_TASK_NOT_FOUND,
   PROJECT_FORBIDDEN,
   PROJECT_UPDATE_FORBIDDEN,
+  BUDGET_NOT_FOUND,
 };
