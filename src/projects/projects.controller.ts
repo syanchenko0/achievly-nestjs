@@ -13,11 +13,13 @@ import { BadRequest, ExtendedRequest } from '@/app/types/common.type';
 import {
   CreateProjectBody,
   CreateProjectColumnBody,
+  CreateProjectParentTaskBody,
   CreateProjectTaskBody,
   GeneralInfoProjectDto,
   ProjectColumn,
   ShortInfoProjectDto,
   UpdateProjectBody,
+  UpdateProjectParentTaskBody,
   UpdateProjectTaskBody,
   UpdateProjectTaskListOrderBody,
 } from '@/projects/dto/swagger.dto';
@@ -29,7 +31,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ProjectDto, ProjectTaskDto } from '@/projects/dto/projects.dto';
+import {
+  ProjectDto,
+  ProjectParentTaskDto,
+  ProjectTaskDto,
+} from '@/projects/dto/projects.dto';
 import { WRONG_PARAMS } from '@/app/constants/error.constant';
 import { TeamIncludeGuard } from '@/teams/guards/teams.guard';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
@@ -88,6 +94,36 @@ export class ProjectsController {
     }
 
     return this.projectService.createProjectTask(
+      user.id,
+      Number(params.project_id),
+      body,
+    );
+  }
+
+  @RightsDecorator(['read', 'create'])
+  @UseGuards(RightsGuard)
+  @Post('/:project_id/parent_tasks')
+  @ApiOperation({
+    summary: 'Create project parent task',
+    operationId: 'createProjectParentTask',
+  })
+  @ApiResponse({ status: 200, type: ProjectParentTaskDto })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiBody({ type: CreateProjectParentTaskBody })
+  @ApiParam({ name: 'project_id', type: Number, required: true })
+  async createProjectParentTask(
+    @Req()
+    request: Omit<ExtendedRequest, 'body'> & {
+      body: CreateProjectParentTaskBody;
+    },
+  ) {
+    const { user, body, params } = request;
+
+    if (!params?.project_id || Number.isNaN(Number(params?.project_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.projectService.createProjectParentTask(
       user.id,
       Number(params.project_id),
       body,
@@ -215,6 +251,44 @@ export class ProjectsController {
 
   @RightsDecorator(['read', 'update'])
   @UseGuards(RightsGuard)
+  @Patch('/:project_id/parent_tasks/:parent_task_id')
+  @ApiOperation({
+    summary: 'Update project parent task',
+    operationId: 'updateProjectParentTask',
+  })
+  @ApiResponse({ status: 200, type: ProjectParentTaskDto })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiBody({ type: UpdateProjectParentTaskBody })
+  @ApiParam({ name: 'project_id', type: Number, required: true })
+  @ApiParam({ name: 'parent_task_id', type: Number, required: true })
+  async updateProjectParentTask(
+    @Req()
+    request: Omit<ExtendedRequest, 'body'> & {
+      body: UpdateProjectParentTaskBody;
+    },
+  ) {
+    const { body, params } = request;
+
+    if (!params?.project_id || Number.isNaN(Number(params?.project_id))) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    if (
+      !params?.parent_task_id ||
+      Number.isNaN(Number(params?.parent_task_id))
+    ) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.projectService.updateProjectParentTask(
+      Number(params.project_id),
+      Number(params.parent_task_id),
+      body,
+    );
+  }
+
+  @RightsDecorator(['read', 'update'])
+  @UseGuards(RightsGuard)
   @Post('/:project_id/tasks/list_order')
   @ApiOperation({
     operationId: 'updateProjectTaskListOrder',
@@ -332,6 +406,32 @@ export class ProjectsController {
     }
 
     return this.projectService.deleteProjectTask(Number(params.task_id));
+  }
+
+  @RightsDecorator(['read', 'delete'])
+  @UseGuards(RightsGuard)
+  @Delete('/:project_id/parent_tasks/:parent_task_id')
+  @ApiOperation({
+    summary: 'Delete project parent task',
+    operationId: 'deleteProjectParentTask',
+  })
+  @ApiResponse({ status: 200, type: ProjectParentTaskDto })
+  @ApiResponse({ status: 400, type: BadRequest })
+  @ApiParam({ name: 'project_id', type: String, required: true })
+  @ApiParam({ name: 'parent_task_id', type: Number, required: true })
+  async deleteProjectParentTask(@Req() request: ExtendedRequest) {
+    const { params } = request;
+
+    if (
+      !params?.parent_task_id ||
+      Number.isNaN(Number(params?.parent_task_id))
+    ) {
+      throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    return this.projectService.deleteProjectParentTask(
+      Number(params.parent_task_id),
+    );
   }
 
   @RightsDecorator(['read', 'delete'])

@@ -8,9 +8,10 @@ import { UsersService } from '@/users/users.service';
 import { TeamsService } from '@/teams/teams.service';
 import {
   ProjectEntity,
+  ProjectParentTaskEntity,
   ProjectTaskEntity,
 } from '@/projects/entities/projects.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   CreateProjectBody,
@@ -22,6 +23,7 @@ import {
   UpdateProjectTaskListOrderBody,
 } from '@/projects/dto/swagger.dto';
 import {
+  COLUMN_IN_USE,
   PROJECT_CREATE_FORBIDDEN,
   PROJECT_NOT_FOUND,
   PROJECT_TASK_NOT_FOUND,
@@ -32,14 +34,22 @@ import {
 } from '@/app/constants/error.constant';
 import {
   createProjectColumnSchema,
+  CreateProjectParentTask,
+  createProjectParentTaskSchema,
   createProjectSchema,
   createProjectTaskSchema,
   projectColumnSchema,
+  UpdateProjectParentTask,
+  updateProjectParentTaskSchema,
   updateProjectSchema,
   updateProjectTaskListOrderBodySchema,
   updateProjectTaskSchema,
 } from '@/projects/schemas/projects.schema';
-import { ProjectDto, ProjectTaskDto } from '@/projects/dto/projects.dto';
+import {
+  ProjectDto,
+  ProjectParentTaskDto,
+  ProjectTaskDto,
+} from '@/projects/dto/projects.dto';
 import { findOwner } from '@/teams/teams.helper';
 import {
   DEFAULT_PROJECT_COLUMNS,
@@ -55,6 +65,8 @@ export class ProjectsService {
     private readonly projectRepository: Repository<ProjectEntity>,
     @InjectRepository(ProjectTaskEntity)
     private readonly projectTaskRepository: Repository<ProjectTaskEntity>,
+    @InjectRepository(ProjectParentTaskEntity)
+    private readonly projectParentTaskRepository: Repository<ProjectParentTaskEntity>,
     private readonly usersService: UsersService,
     private readonly teamsService: TeamsService,
   ) {}
@@ -62,7 +74,12 @@ export class ProjectsService {
   async getProjects(team_id: number, user_id: number) {
     const projects = await this.projectRepository.find({
       where: { team: { id: team_id } },
-      relations: ['team', 'team.members', 'project_tasks'],
+      relations: [
+        'team',
+        'team.members',
+        'project_tasks',
+        'project_parent_tasks',
+      ],
     });
 
     return projects
@@ -87,7 +104,14 @@ export class ProjectsService {
   async getProject(project_id: number, user_id: number) {
     const project = await this.projectRepository.findOne({
       where: { id: project_id },
-      relations: ['team', 'team.members', 'project_tasks'],
+      relations: [
+        'team',
+        'team.members',
+        'project_tasks',
+        'project_tasks.parent_task',
+        'project_parent_tasks',
+        'project_parent_tasks.project_tasks',
+      ],
     });
 
     if (!project) {
@@ -230,7 +254,64 @@ export class ProjectsService {
       project,
     });
 
+    if (body?.parent_task_id) {
+      const project_parent_task =
+        await this.projectParentTaskRepository.findOne({
+          where: { id: body.parent_task_id },
+          relations: ['project_tasks'],
+        });
+
+      if (!project_parent_task) return;
+
+      project_parent_task.project_tasks = [
+        ...(project_parent_task?.project_tasks ?? []),
+        project_task,
+      ];
+
+      await this.projectParentTaskRepository.save(project_parent_task);
+
+      return new ProjectTaskDto({
+        ...project_task,
+        parent_task: project_parent_task,
+      });
+    }
+
     return new ProjectTaskDto(project_task);
+  }
+
+  async createProjectParentTask(
+    user_id: number,
+    project_id: number,
+    body: CreateProjectParentTask,
+  ) {
+    const { error } = createProjectParentTaskSchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    const project = await this.projectRepository.findOne({
+      where: { id: project_id },
+      relations: ['team', 'team.members'],
+    });
+
+    if (!project) {
+      throw new NotFoundException(PROJECT_NOT_FOUND);
+    }
+
+    const author = project.team.members.find(
+      (member) => member.user.id === user_id,
+    );
+
+    const project_parent_task = await this.projectParentTaskRepository.save({
+      name: body.name,
+      description: body?.description,
+      author: author,
+      deadline_date: body?.deadline_date,
+      project,
+    });
+
+    return new ProjectParentTaskDto(project_parent_task);
   }
 
   async createProjectColumn(project_id: number, body: CreateProjectColumnBody) {
@@ -347,7 +428,13 @@ export class ProjectsService {
 
     const project = await this.projectRepository.findOne({
       where: { id: project_id },
-      relations: ['team', 'team.members', 'project_tasks'],
+      relations: [
+        'team',
+        'team.members',
+        'project_tasks',
+        'project_tasks.parent_task',
+        'project_parent_tasks',
+      ],
     });
 
     if (!project) {
@@ -360,6 +447,41 @@ export class ProjectsService {
 
     if (!project_task) {
       throw new NotFoundException(PROJECT_TASK_NOT_FOUND);
+    }
+
+    if (!body?.parent_task_id && project_task?.parent_task) {
+      const project_parent_task =
+        await this.projectParentTaskRepository.findOne({
+          where: { id: project_task?.parent_task.id },
+          relations: ['project_tasks'],
+        });
+
+      if (!project_parent_task) return;
+
+      project_parent_task.project_tasks = (
+        project_parent_task?.project_tasks ?? []
+      )?.filter((task) => {
+        return task.id !== project_task.id;
+      });
+
+      await this.projectParentTaskRepository.save(project_parent_task);
+    }
+
+    if (body?.parent_task_id) {
+      const project_parent_task =
+        await this.projectParentTaskRepository.findOne({
+          where: { id: body.parent_task_id },
+          relations: ['project_tasks'],
+        });
+
+      if (!project_parent_task) return;
+
+      project_parent_task.project_tasks = [
+        ...(project_parent_task?.project_tasks ?? []),
+        project_task,
+      ];
+
+      await this.projectParentTaskRepository.save(project_parent_task);
     }
 
     await this.projectTaskRepository.update(task_id, {
@@ -377,6 +499,46 @@ export class ProjectsService {
     });
 
     return new ProjectTaskDto(project_task);
+  }
+
+  async updateProjectParentTask(
+    project_id: number,
+    parent_task_id: number,
+    body: UpdateProjectParentTask,
+  ) {
+    const { error } = updateProjectParentTaskSchema.safeParse(body);
+
+    if (error) {
+      throw new BadRequestException(WRONG_BODY);
+    }
+
+    const project_parent_task = await this.projectParentTaskRepository.findOne({
+      where: { id: parent_task_id },
+      relations: ['project_tasks'],
+    });
+
+    const project_tasks = await this.projectTaskRepository.find({
+      where: { id: In(body?.project_task_ids ?? []) },
+      relations: ['parent_task'],
+    });
+
+    if (!project_parent_task) {
+      throw new NotFoundException(PROJECT_TASK_NOT_FOUND);
+    }
+
+    project_parent_task.name = body?.name ?? project_parent_task.name;
+    project_parent_task.description =
+      body?.description ?? project_parent_task?.description;
+    project_parent_task.deadline_date =
+      body?.deadline_date ?? project_parent_task.deadline_date;
+    project_parent_task.done_date =
+      body?.done_date ?? project_parent_task.done_date;
+    project_parent_task.project_tasks =
+      project_tasks ?? project_parent_task?.project_tasks;
+
+    await this.projectParentTaskRepository.save(project_parent_task);
+
+    return new ProjectParentTaskDto(project_parent_task);
   }
 
   async updateProjectTaskListOrder(body: UpdateProjectTaskListOrderBody[]) {
@@ -424,6 +586,20 @@ export class ProjectsService {
     return new ProjectTaskDto(task);
   }
 
+  async deleteProjectParentTask(parent_task_id: number) {
+    const parent_task = await this.projectParentTaskRepository.findOneBy({
+      id: parent_task_id,
+    });
+
+    if (!parent_task) {
+      throw new NotFoundException(TASK_NOT_FOUND);
+    }
+
+    await this.projectParentTaskRepository.delete(parent_task_id);
+
+    return new ProjectParentTaskDto(parent_task);
+  }
+
   async deleteProjectColumn(column_id: string, project_id: number) {
     const project = await this.projectRepository.findOneBy({ id: project_id });
 
@@ -435,6 +611,10 @@ export class ProjectsService {
 
     if (!column) {
       throw new BadRequestException(WRONG_PARAMS);
+    }
+
+    if (project.project_tasks?.some((task) => task.column.id === column.id)) {
+      throw new BadRequestException(COLUMN_IN_USE);
     }
 
     await this.projectRepository.update(project_id, {

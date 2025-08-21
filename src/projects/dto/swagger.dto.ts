@@ -182,6 +182,41 @@ class CreateProjectTaskBody {
     description: 'Дедлайн задачи',
   })
   deadline_date: string | null;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    nullable: true,
+    description: 'ID родительской задачи',
+  })
+  parent_task_id: number | null;
+}
+
+class CreateProjectParentTaskBody {
+  @ApiProperty({
+    type: String,
+    required: true,
+    nullable: false,
+    minLength: 1,
+    description: 'Наименование родительской задачи',
+  })
+  name: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Описание родительской задачи',
+  })
+  description: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Дедлайн родительской задачи',
+  })
+  deadline_date: string | null;
 }
 
 class UpdateProjectTaskBody {
@@ -240,6 +275,58 @@ class UpdateProjectTaskBody {
     description: 'Дата завершения задачи',
   })
   done_date: string | null;
+
+  @ApiProperty({
+    type: Number,
+    required: false,
+    nullable: true,
+    description: 'ID родительской задачи',
+  })
+  parent_task_id: number | null;
+}
+
+class UpdateProjectParentTaskBody {
+  @ApiProperty({
+    type: String,
+    required: true,
+    nullable: false,
+    minLength: 1,
+    description: 'Наименование родительской задачи',
+  })
+  name: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Описание родительской задачи',
+  })
+  description: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Дедлайн родительской задачи',
+  })
+  deadline_date: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Дата завершения задачи',
+  })
+  done_date: string | null;
+
+  @ApiProperty({
+    type: Number,
+    isArray: true,
+    required: false,
+    nullable: true,
+    description: 'Массив ID задач',
+  })
+  project_task_ids: number[] | null;
 }
 
 class UpdateProjectTaskListOrderBody {
@@ -282,8 +369,10 @@ export {
   ProjectColumn,
   CreateProjectColumnBody,
   CreateProjectTaskBody,
+  CreateProjectParentTaskBody,
   UpdateProjectBody,
   UpdateProjectTaskBody,
+  UpdateProjectParentTaskBody,
   UpdateProjectTaskListOrderBody,
   GeneralInfoProjectDto,
 };

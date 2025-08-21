@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   ProjectEntity,
+  ProjectParentTaskEntity,
   ProjectTaskEntity,
 } from '@/projects/entities/projects.entity';
 import { TeamDto } from '@/teams/dto/team.dto';
@@ -74,6 +75,14 @@ class ProjectTaskDto {
   })
   done_date: string | null;
 
+  @ApiProperty({
+    type: () => ProjectParentTaskDto,
+    required: false,
+    nullable: true,
+    description: 'Родительская задача',
+  })
+  parent_task: ProjectParentTaskDto | null;
+
   constructor(task: ProjectTaskEntity) {
     this.id = task.id;
     this.name = task.name;
@@ -84,6 +93,78 @@ class ProjectTaskDto {
     this.executor = task.executor;
     this.deadline_date = task.deadline_date;
     this.done_date = task.done_date;
+    this.parent_task = task.parent_task
+      ? new ProjectParentTaskDto(task.parent_task)
+      : null;
+  }
+}
+
+class ProjectParentTaskDto {
+  @ApiProperty({
+    type: Number,
+    required: true,
+    description: 'ID родительской задачи',
+  })
+  id: number;
+
+  @ApiProperty({
+    type: String,
+    required: true,
+    description: 'Наименование родительской задачи',
+  })
+  name: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Описание родительской задачи',
+  })
+  description: string | null;
+
+  @ApiProperty({
+    type: () => MemberDto,
+    required: true,
+    nullable: false,
+    description: 'Автор задачи',
+  })
+  author: MemberDto;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Дедлайн родительской задачи',
+  })
+  deadline_date: string | null;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+    nullable: true,
+    description: 'Дата завершения родительской задачи',
+  })
+  done_date: string | null;
+
+  @ApiProperty({
+    type: () => ProjectTaskDto,
+    isArray: true,
+    required: false,
+    nullable: true,
+    description: 'Дочерние задачи',
+  })
+  project_tasks: ProjectTaskDto[] | null;
+
+  constructor(task: ProjectParentTaskEntity) {
+    this.id = task.id;
+    this.name = task.name;
+    this.description = task.description;
+    this.author = task.author;
+    this.deadline_date = task.deadline_date;
+    this.done_date = task.done_date;
+    this.project_tasks = task.project_tasks
+      ? task.project_tasks?.map((task) => new ProjectTaskDto(task))
+      : null;
   }
 }
 
@@ -127,9 +208,18 @@ class ProjectDto {
     isArray: true,
     required: false,
     nullable: true,
-    description: 'Команда проекта',
+    description: 'Массив задач проекта',
   })
-  project_tasks: ProjectTaskDto[];
+  project_tasks: ProjectTaskDto[] | null;
+
+  @ApiProperty({
+    type: () => ProjectParentTaskDto,
+    isArray: true,
+    required: false,
+    nullable: true,
+    description: 'Массив родительских задач',
+  })
+  project_parent_tasks: ProjectParentTaskDto[] | null;
 
   constructor(project: ProjectEntity, user_id: number) {
     this.id = project.id;
@@ -143,7 +233,10 @@ class ProjectDto {
     this.project_tasks = (project?.project_tasks ?? [])
       .sort((a, b) => a.list_order - b.list_order)
       .map((project_task) => new ProjectTaskDto(project_task));
+    this.project_parent_tasks = (project?.project_parent_tasks ?? []).map(
+      (project_task) => new ProjectParentTaskDto(project_task),
+    );
   }
 }
 
-export { ProjectDto, ProjectTaskDto };
+export { ProjectDto, ProjectTaskDto, ProjectParentTaskDto };

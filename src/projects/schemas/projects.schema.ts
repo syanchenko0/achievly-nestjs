@@ -28,6 +28,14 @@ const createProjectTaskSchema = z.object({
   column: projectColumnSchema,
   priority: z.string(ZOD_ERROR).nullish(),
   executor_member_id: z.number(ZOD_ERROR).nullish(),
+  deadline_date: z.string(ZOD_ERROR).nullish(),
+  parent_task_id: z.number(ZOD_ERROR).nullish(),
+});
+
+const createProjectParentTaskSchema = z.object({
+  name: z.string(ZOD_ERROR),
+  description: z.string(ZOD_ERROR).nullish(),
+  deadline_date: z.string(ZOD_ERROR).nullish(),
 });
 
 const updateProjectTaskSchema = z.object({
@@ -38,6 +46,15 @@ const updateProjectTaskSchema = z.object({
   executor_member_id: z.number(ZOD_ERROR).nullish(),
   deadline_date: z.string(ZOD_ERROR).nullish(),
   done_date: z.string(ZOD_ERROR).nullish(),
+  parent_task_id: z.number(ZOD_ERROR).nullish(),
+});
+
+const updateProjectParentTaskSchema = z.object({
+  name: z.string(ZOD_ERROR),
+  description: z.string(ZOD_ERROR).nullish(),
+  deadline_date: z.string(ZOD_ERROR).nullish(),
+  done_date: z.string(ZOD_ERROR).nullish(),
+  project_task_ids: z.array(z.number(ZOD_ERROR), ZOD_ERROR).nullish(),
 });
 
 const updateProjectTaskListOrderBodySchema = z.array(
@@ -47,12 +64,20 @@ const updateProjectTaskListOrderBodySchema = z.array(
   }),
 );
 
+type CreateProjectParentTask = z.infer<typeof createProjectParentTaskSchema>;
+
+type UpdateProjectParentTask = z.infer<typeof updateProjectParentTaskSchema>;
+
+export type { CreateProjectParentTask, UpdateProjectParentTask };
+
 export {
   projectColumnSchema,
   createProjectColumnSchema,
   createProjectSchema,
   createProjectTaskSchema,
+  createProjectParentTaskSchema,
   updateProjectSchema,
   updateProjectTaskSchema,
+  updateProjectParentTaskSchema,
   updateProjectTaskListOrderBodySchema,
 };

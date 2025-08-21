@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   ProjectEntity,
+  ProjectParentTaskEntity,
   ProjectTaskEntity,
 } from '@/projects/entities/projects.entity';
 import { UsersModule } from '@/users/users.module';
@@ -17,7 +18,11 @@ import { TeamsModule } from '@/teams/teams.module';
     JwtModule,
     UsersModule,
     TeamsModule,
-    TypeOrmModule.forFeature([ProjectEntity, ProjectTaskEntity]),
+    TypeOrmModule.forFeature([
+      ProjectEntity,
+      ProjectTaskEntity,
+      ProjectParentTaskEntity,
+    ]),
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService],

@@ -35,6 +35,11 @@ class ProjectEntity {
   })
   project_tasks: ProjectTaskEntity[] | null;
 
+  @OneToMany(() => ProjectParentTaskEntity, (task) => task.project, {
+    nullable: true,
+  })
+  project_parent_tasks: ProjectParentTaskEntity[] | null;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
@@ -81,6 +86,13 @@ class ProjectTaskEntity {
   @ManyToOne(() => ProjectEntity, (project) => project.project_tasks)
   project: ProjectEntity;
 
+  @ManyToOne(
+    () => ProjectParentTaskEntity,
+    (project) => project.project_tasks,
+    { nullable: true },
+  )
+  parent_task: ProjectParentTaskEntity | null;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
@@ -92,4 +104,43 @@ class ProjectTaskEntity {
   updated_at: Date;
 }
 
-export { ProjectEntity, ProjectTaskEntity };
+@Entity({ name: 'project_parent_task' })
+class ProjectParentTaskEntity {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ nullable: false })
+  name: string;
+
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
+  @Column({ type: 'jsonb', nullable: false })
+  author: MemberDto;
+
+  @Column({ nullable: true, type: 'text' })
+  deadline_date: string | null;
+
+  @Column({ nullable: true, type: 'text' })
+  done_date: string | null;
+
+  @ManyToOne(() => ProjectEntity, (project) => project.project_parent_tasks)
+  project: ProjectEntity;
+
+  @OneToMany(() => ProjectTaskEntity, (task) => task.parent_task, {
+    nullable: true,
+  })
+  project_tasks: ProjectTaskEntity[] | null;
+
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updated_at: Date;
+}
+
+export { ProjectEntity, ProjectTaskEntity, ProjectParentTaskEntity };

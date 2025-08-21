@@ -55,6 +55,8 @@ const PROJECT_UPDATE_FORBIDDEN =
 
 const BUDGET_NOT_FOUND = 'Бюджет пользователя не найден';
 
+const COLUMN_IN_USE = 'В столбце есть задачи';
+
 export {
   WRONG_BODY,
   WRONG_PARAMS,
@@ -80,4 +82,5 @@ export {
   PROJECT_FORBIDDEN,
   PROJECT_UPDATE_FORBIDDEN,
   BUDGET_NOT_FOUND,
+  COLUMN_IN_USE,
 };
