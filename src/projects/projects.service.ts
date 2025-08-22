@@ -426,77 +426,40 @@ export class ProjectsService {
       throw new BadRequestException(WRONG_BODY);
     }
 
-    const project = await this.projectRepository.findOne({
-      where: { id: project_id },
+    const project_task = await this.projectTaskRepository.findOne({
+      where: { id: task_id },
       relations: [
-        'team',
-        'team.members',
-        'project_tasks',
-        'project_tasks.parent_task',
-        'project_parent_tasks',
+        'parent_task',
+        'project',
+        'project.team',
+        'project.team.members',
       ],
     });
-
-    if (!project) {
-      throw new NotFoundException(PROJECT_NOT_FOUND);
-    }
-
-    const project_task = project.project_tasks?.find(
-      (task) => task.id === task_id,
-    );
 
     if (!project_task) {
       throw new NotFoundException(PROJECT_TASK_NOT_FOUND);
     }
 
-    if (!body?.parent_task_id && project_task?.parent_task) {
-      const project_parent_task =
-        await this.projectParentTaskRepository.findOne({
-          where: { id: project_task?.parent_task.id },
-          relations: ['project_tasks'],
-        });
-
-      if (!project_parent_task) return;
-
-      project_parent_task.project_tasks = (
-        project_parent_task?.project_tasks ?? []
-      )?.filter((task) => {
-        return task.id !== project_task.id;
-      });
-
-      await this.projectParentTaskRepository.save(project_parent_task);
-    }
-
-    if (body?.parent_task_id) {
-      const project_parent_task =
-        await this.projectParentTaskRepository.findOne({
-          where: { id: body.parent_task_id },
-          relations: ['project_tasks'],
-        });
-
-      if (!project_parent_task) return;
-
-      project_parent_task.project_tasks = [
-        ...(project_parent_task?.project_tasks ?? []),
-        project_task,
-      ];
-
-      await this.projectParentTaskRepository.save(project_parent_task);
-    }
-
-    await this.projectTaskRepository.update(task_id, {
-      name: body?.name ?? project_task.name,
-      description: body?.description ?? project_task?.description,
-      column: body?.column ?? project_task.column,
-      priority: body?.priority as PROJECT_TASK_PRIORITY,
-      executor: body?.executor_member_id
-        ? project.team.members.find(
-            (member) => member.id === body?.executor_member_id,
-          )
-        : project_task?.executor,
-      deadline_date: body?.deadline_date,
-      done_date: body?.done_date,
+    const project_parent_task = await this.projectParentTaskRepository.findOne({
+      where: { id: body?.parent_task_id ?? project_task?.parent_task?.id },
     });
+
+    project_task.name = body?.name ?? project_task.name;
+    project_task.description = body?.description ?? project_task.description;
+    project_task.column = body?.column ?? project_task.column;
+    project_task.priority = body?.priority as PROJECT_TASK_PRIORITY;
+    project_task.executor =
+      typeof body?.executor_member_id === 'number'
+        ? (project_task.project.team.members.find(
+            (member) => member.id === body?.executor_member_id,
+          ) ?? project_task?.executor)
+        : project_task?.executor;
+    project_task.deadline_date = body?.deadline_date;
+    project_task.done_date = body?.done_date;
+    project_task.parent_task =
+      typeof body?.parent_task_id === 'number' ? project_parent_task : null;
+
+    await this.projectTaskRepository.save(project_task);
 
     return new ProjectTaskDto(project_task);
   }
@@ -548,11 +511,26 @@ export class ProjectsService {
       throw new BadRequestException(WRONG_BODY);
     }
 
+    const response: ProjectTaskEntity[] = [];
+
     for (const task of body) {
-      await this.projectTaskRepository.update(task.id, {
-        list_order: task.list_order,
+      const project_task = await this.projectTaskRepository.findOne({
+        where: { id: task.id },
+        relations: ['parent_task', 'project'],
       });
+
+      if (!project_task) {
+        throw new NotFoundException(PROJECT_TASK_NOT_FOUND);
+      }
+
+      project_task.list_order = task.list_order;
+
+      await this.projectTaskRepository.save(project_task);
+
+      response.push(project_task);
     }
+
+    return response.sort((a, b) => a.list_order - b.list_order);
   }
 
   async deleteProject(project_id: number, user_id: number) {

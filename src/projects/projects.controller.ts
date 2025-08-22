@@ -39,7 +39,6 @@ import {
 import { WRONG_PARAMS } from '@/app/constants/error.constant';
 import { TeamIncludeGuard } from '@/teams/guards/teams.guard';
 import { JwtAuthGuard } from '@/auth/guards/auth.guard';
-import { UpdateResult } from 'typeorm';
 import { UpdateTaskListOrderBody } from '@/goals/dto/swagger.dto';
 import { RightsDecorator } from '@/projects/decorators/rights.decorator';
 import { RightsGuard } from '@/projects/guards/rights.guard';
@@ -294,7 +293,7 @@ export class ProjectsController {
     operationId: 'updateProjectTaskListOrder',
     summary: 'Update project task list order',
   })
-  @ApiResponse({ status: 200, type: UpdateResult })
+  @ApiResponse({ status: 200, type: ProjectTaskDto, isArray: true })
   @ApiResponse({ status: 400, type: BadRequest })
   @ApiBody({ type: UpdateProjectTaskListOrderBody, isArray: true })
   @ApiParam({ name: 'project_id', type: Number, required: true })
