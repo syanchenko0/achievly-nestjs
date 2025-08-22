@@ -23,8 +23,11 @@ export class AppGateway {
   server: Server;
 
   @SubscribeMessage('project_invalidation')
-  projectInvalidation(client: Socket, payload: { members: string[] }) {
-    if (!payload?.members?.length) {
+  projectInvalidation(
+    client: Socket,
+    payload: { members: string[]; project_id: number },
+  ) {
+    if (!payload?.members?.length && !payload?.project_id) {
       return;
     }
 
@@ -35,12 +38,15 @@ export class AppGateway {
     this.server
       .to(onlineMembers)
       .except(client.id)
-      .emit('project_invalidation');
+      .emit('project_invalidation', String(payload?.project_id));
   }
 
   @SubscribeMessage('projects_list_invalidation')
-  projectsListInvalidation(client: Socket, payload: { members: string[] }) {
-    if (!payload?.members?.length) {
+  projectsListInvalidation(
+    client: Socket,
+    payload: { members: string[]; team_id: number },
+  ) {
+    if (!payload?.members?.length && !payload?.team_id) {
       return;
     }
 
@@ -51,6 +57,6 @@ export class AppGateway {
     this.server
       .to(onlineMembers)
       .except(client.id)
-      .emit('projects_list_invalidation');
+      .emit('projects_list_invalidation', String(payload.team_id));
   }
 }
