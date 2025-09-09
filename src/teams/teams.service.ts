@@ -353,7 +353,7 @@ export class TeamsService {
   async deleteMember(team_id: number, member_id: number, user_id: number) {
     const team = await this.teamRepository.findOne({
       where: { id: team_id },
-      relations: ['members', 'users'],
+      relations: ['members', 'users', 'projects', 'projects.project_tasks'],
     });
 
     if (!team) {
@@ -380,9 +380,20 @@ export class TeamsService {
 
     team.members = team.members.filter((m) => m.id !== member_id);
     team.users = team.users.filter((u) => u.id !== member.user.id);
+    team.projects = team.projects?.map((project) => {
+      return {
+        ...project,
+        project_tasks: (project.project_tasks ?? [])?.map((task) => {
+          return {
+            ...task,
+            executor: task.executor?.id === member_id ? null : task.executor,
+          };
+        }),
+      };
+    });
+
+    await this.memberRepository.delete({ id: member_id });
 
     await this.teamRepository.save(team);
-
-    return await this.memberRepository.delete({ id: member_id });
   }
 }

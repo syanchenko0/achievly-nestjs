@@ -21,10 +21,14 @@ class TeamEntity {
   @Column({ generated: 'uuid' })
   join_access_token: string;
 
-  @OneToMany(() => MemberEntity, (member) => member.team)
+  @OneToMany(() => MemberEntity, (member) => member.team, {
+    cascade: true,
+  })
   members: MemberEntity[];
 
-  @OneToMany(() => ProjectEntity, (project) => project.team)
+  @OneToMany(() => ProjectEntity, (project) => project.team, {
+    cascade: true,
+  })
   projects?: ProjectEntity[];
 
   @ManyToMany(() => UserEntity, (user) => user.teams)

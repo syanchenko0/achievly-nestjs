@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppGateway } from './app.gateway';
 import { BudgetModule } from './budget/budget.module';
+import AppDataSource from './data-source';
 
 @Module({
   imports: [
@@ -21,18 +22,7 @@ import { BudgetModule } from './budget/budget.module';
     TeamsModule,
     NotificationsModule,
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.POSTGRES_HOST,
-      port: parseInt(process.env.POSTGRES_PORT as string),
-      username: process.env.POSTGRES_USERNAME,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DATABASE,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-      synchronize: false,
-      migrationsRun: true,
-    }),
+    TypeOrmModule.forRoot(AppDataSource.options),
     BudgetModule,
   ],
   controllers: [],

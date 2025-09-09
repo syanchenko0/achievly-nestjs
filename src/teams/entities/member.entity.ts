@@ -18,7 +18,9 @@ class MemberEntity {
   @Column({ type: 'jsonb', nullable: true })
   projects_rights?: ProjectRightsDto[];
 
-  @ManyToOne(() => TeamEntity, (team) => team.members)
+  @ManyToOne(() => TeamEntity, (team) => team.members, {
+    onDelete: 'CASCADE',
+  })
   team: TeamEntity;
 }
 

@@ -24,7 +24,9 @@ class ProjectEntity {
   @Column({ type: 'jsonb', nullable: false, default: [] })
   columns: ProjectColumn[];
 
-  @ManyToOne(() => TeamEntity, (team) => team.projects)
+  @ManyToOne(() => TeamEntity, (team) => team.projects, {
+    onDelete: 'CASCADE',
+  })
   team: TeamEntity;
 
   @ManyToOne(() => UserEntity, (user) => user.projects)
@@ -32,6 +34,7 @@ class ProjectEntity {
 
   @OneToMany(() => ProjectTaskEntity, (task) => task.project, {
     nullable: true,
+    cascade: true,
   })
   project_tasks: ProjectTaskEntity[] | null;
 
@@ -83,13 +86,15 @@ class ProjectTaskEntity {
   @Column({ nullable: true, type: 'text' })
   done_date: string | null;
 
-  @ManyToOne(() => ProjectEntity, (project) => project.project_tasks)
+  @ManyToOne(() => ProjectEntity, (project) => project.project_tasks, {
+    onDelete: 'CASCADE',
+  })
   project: ProjectEntity;
 
   @ManyToOne(
     () => ProjectParentTaskEntity,
     (project) => project.project_tasks,
-    { nullable: true },
+    { nullable: true, onDelete: 'SET NULL' },
   )
   parent_task: ProjectParentTaskEntity | null;
 
@@ -129,6 +134,7 @@ class ProjectParentTaskEntity {
 
   @OneToMany(() => ProjectTaskEntity, (task) => task.parent_task, {
     nullable: true,
+    cascade: true,
   })
   project_tasks: ProjectTaskEntity[] | null;
 
