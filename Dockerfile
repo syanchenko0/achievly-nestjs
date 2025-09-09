@@ -34,10 +34,12 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/tsconfig.build.json ./tsconfig.build.json
 COPY --from=builder /app/nest-cli.json ./nest-cli.json
 
-# Expose Nest default port
-EXPOSE 4000
-
 # Default command runs build+migrations+app (see package.json start:prod)
 CMD ["npm", "run", "migration:generate"]
 CMD ["npm", "run", "migration:run"]
 CMD ["npm", "run", "start:prod"]
+
+# Expose Nest default port
+EXPOSE 4000
+
+
