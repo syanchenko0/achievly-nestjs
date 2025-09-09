@@ -453,7 +453,7 @@ export class ProjectsService {
         ? (project_task.project.team.members.find(
             (member) => member.id === body?.executor_member_id,
           ) ?? project_task?.executor)
-        : project_task?.executor;
+        : null;
     project_task.deadline_date = body?.deadline_date;
     project_task.done_date = body?.done_date;
     project_task.parent_task =
