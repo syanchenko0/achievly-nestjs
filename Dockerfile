@@ -34,12 +34,19 @@ COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/tsconfig.build.json ./tsconfig.build.json
 COPY --from=builder /app/nest-cli.json ./nest-cli.json
 
-# Default command runs build+migrations+app (see package.json start:prod)
-CMD ["npm", "run", "migration:generate"]
-CMD ["npm", "run", "migration:run"]
-CMD ["npm", "run", "start:prod"]
+# Create startup script
+RUN echo '#!/bin/sh\n\
+echo "Generating migrations..."\n\
+npm run migration:generate\n\
+echo "Running migrations..."\n\
+npm run migration:run\n\
+echo "Starting application..."\n\
+npm run start:prod' > /app/start.sh && chmod +x /app/start.sh
 
 # Expose Nest default port
-EXPOSE 4000
+EXPOSE 3000
+
+# Run startup script
+CMD ["/app/start.sh"]
 
 
