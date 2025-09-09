@@ -129,7 +129,9 @@ class ProjectParentTaskEntity {
   @Column({ nullable: true, type: 'text' })
   done_date: string | null;
 
-  @ManyToOne(() => ProjectEntity, (project) => project.project_parent_tasks)
+  @ManyToOne(() => ProjectEntity, (project) => project.project_parent_tasks, {
+    onDelete: 'CASCADE',
+  })
   project: ProjectEntity;
 
   @OneToMany(() => ProjectTaskEntity, (task) => task.parent_task, {
